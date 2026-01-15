@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: obverse-api
+    runtime: node
+    plan: starter # or free, adjust based on your plan
+    buildCommand: pnpm install && pnpm run build
+    startCommand: pnpm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=512
+    # Add your other environment variables in Render dashboard
