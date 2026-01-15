@@ -60,9 +60,14 @@ export class PaymentsService {
         const confirmations = dto.confirmations || (isConfirmed ? 1 : 0);
 
         // 7. Create the payment record
+        // Extract merchantId - handle both populated (object) and non-populated (ObjectId) cases
+        const merchantId = typeof paymentLink.merchantId === 'object' && paymentLink.merchantId._id
+            ? paymentLink.merchantId._id.toString()
+            : paymentLink.merchantId.toString();
+
         const payment = await this.createPayment({
             paymentLinkId: paymentLink._id.toString(),
-            merchantId: paymentLink.merchantId.toString(),
+            merchantId: merchantId,
             txSignature: dto.txSignature,
             chain: dto.chain,
             amount: dto.amount,
