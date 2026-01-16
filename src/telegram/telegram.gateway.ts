@@ -68,11 +68,11 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
             }
         });
 
-        this.bot.command('create', async (ctx) => {
+        this.bot.command('payment', async (ctx) => {
             try {
                 await this.createLinkHandler.handle(ctx);
             } catch (error) {
-                this.logger.error(`Error in /create command: ${error.message}`, error.stack);
+                this.logger.error(`Error in /payment command: ${error.message}`, error.stack);
                 await ctx.reply('❌ Sorry, something went wrong. Please try again.');
             }
         });
@@ -149,7 +149,7 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
                         }
                         break;
 
-                    case 'create':
+                    case 'payment':
                         if (state.currentStep === 'awaiting_custom_fields') {
                             await this.createLinkHandler.handleCustomFieldsInput(ctx, state);
                         } else if (state.currentStep === 'awaiting_amount') {

@@ -6,7 +6,7 @@ export class HelpHandler {
     await ctx.reply(
       `🤖 Obverse Bot Commands\n\n` +
       `💰 Payment Links:\n` +
-      `/create - Create a new payment link\n` +
+      `/payment - Create a new payment link\n` +
       `/links - View all your payment links\n` +
       `/link <id> - View specific link details\n\n` +
       `💳 Wallet & Balance:\n` +
@@ -16,7 +16,7 @@ export class HelpHandler {
       `⚙️ Settings:\n` +
       `/settings - Configure bot settings\n` +
       `/help - Show this help message\n\n` +
-      `💡 Tip: Use /create to start accepting payments!`
+      `💡 Tip: Use /payment to start accepting payments!`
     );
   }
 }

@@ -28,7 +28,7 @@ export class StartHandler {
                 `👋 Welcome back, ${firstName}!\n\n` +
                 `Your wallet: \`${existingMerchant.walletAddress.slice(0, 8)}...${existingMerchant.walletAddress.slice(-8)}\`\n\n` +
                 `What would you like to do?\n\n` +
-                `/create - Create a payment link\n` +
+                `/payment - Create a payment link\n` +
                 `/links - View your payment links\n` +
                 `/wallet - View your wallet\n` +
                 `/settings - Configure settings\n` +
@@ -59,7 +59,7 @@ export class StartHandler {
                 `Your wallet has been created:\n` +
                 `\`${wallet.solanaAddress}\`\n\n` +
                 `You can now receive stablecoin payments directly to this wallet.\n\n` +
-                `/create - Create a payment link\n` +
+                `/payment - Create a payment link\n` +
                 `/help - Show all commands`,
                 { parse_mode: 'Markdown' }
             );
@@ -93,7 +93,7 @@ export class StartHandler {
         await ctx.reply(
             `✅ Wallet address saved!\n\n` +
             `You're all set! Here's what you can do:\n\n` +
-            `/create - Create your first payment link\n` +
+            `/payment - Create your first payment link\n` +
             `/links - View your payment links\n` +
             `/wallet - Update your wallet\n` +
             `/settings - Configure settings\n` +

@@ -46,7 +46,7 @@ export class ListLinksHandler {
 
             await ctx.reply(
                 `📭 You haven't created any payment links yet.\n\n` +
-                `Use /create to create your first payment link!`,
+                `Use /payment to create your first payment link!`,
                 { reply_markup: keyboard }
             );
             return;

@@ -23,11 +23,11 @@ export class CreateLinkHandler {
             return;
         }
 
-        // Start create link flow
+        // Start payment link creation flow
         await this.conversationManager.setState(
             telegramId,
             merchant._id.toString(),
-            'create',
+            'payment',
             'awaiting_custom_fields',
             {}
         );
