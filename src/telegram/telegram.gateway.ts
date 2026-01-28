@@ -9,6 +9,7 @@ import { WalletHandler } from './handlers/wallet.handler';
 import { SettingsHandler } from './handlers/setting.handler';
 import { TransactionsHandler } from './handlers/transactions.handler';
 import { BalanceHandler } from './handlers/balance.handler';
+import { SendHandler } from './handlers/send.handler';
 import { ConversationManager } from './conversation/conversation.manager';
 import { ConfigService } from '@nestjs/config';
 
@@ -28,6 +29,7 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
         private settingsHandler: SettingsHandler,
         private transactionsHandler: TransactionsHandler,
         private balanceHandler: BalanceHandler,
+        private sendHandler: SendHandler,
         private conversationManager: ConversationManager,
     ) {
         const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
@@ -130,6 +132,15 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
                 await ctx.reply('❌ Sorry, something went wrong. Please try again.');
             }
         });
+
+        this.bot.command('send', async (ctx) => {
+            try {
+                await this.sendHandler.handle(ctx);
+            } catch (error) {
+                this.logger.error(`Error in /send command: ${error.message}`, error.stack);
+                await ctx.reply('❌ Sorry, something went wrong. Please try again.');
+            }
+        });
     }
 
     private registerMessageHandlers() {
@@ -172,6 +183,14 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
                             await this.settingsHandler.handleDefaultFieldsInput(ctx, state);
                         }
                         break;
+
+                    case 'send':
+                        if (state.currentStep === 'awaiting_recipient') {
+                            await this.sendHandler.handleRecipientInput(ctx, state);
+                        } else if (state.currentStep === 'awaiting_amount') {
+                            await this.sendHandler.handleAmountInput(ctx, state);
+                        }
+                        break;
                 }
             } catch (error) {
                 this.logger.error(`Error handling text message: ${error.message}`, error.stack);
@@ -195,6 +214,37 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
                 }
 
                 const data = callbackQuery.data;
+
+                // Handle send command callbacks
+                if (data.startsWith('send_wallet:')) {
+                    await ctx.answerCbQuery();
+                    const walletAddress = data.replace('send_wallet:', '');
+                    await this.sendHandler.handleWalletSelection(ctx, walletAddress);
+                    return;
+                }
+
+                if (data.startsWith('send_token_type:')) {
+                    await ctx.answerCbQuery();
+                    const tokenType = data.replace('send_token_type:', '');
+                    await this.sendHandler.handleTokenTypeSelection(ctx, tokenType);
+                    return;
+                }
+
+                if (data === 'send_confirm') {
+                    await ctx.answerCbQuery();
+                    const state = await this.conversationManager.getState(telegramId);
+                    if (state) {
+                        await this.sendHandler.executeTransaction(ctx, state);
+                    }
+                    return;
+                }
+
+                if (data === 'send_cancel') {
+                    await ctx.answerCbQuery();
+                    await this.conversationManager.clearState(telegramId);
+                    await ctx.reply('❌ Transfer cancelled.');
+                    return;
+                }
 
                 // Handle view link callbacks (from list-links.handler.ts)
                 if (data.startsWith('view:')) {

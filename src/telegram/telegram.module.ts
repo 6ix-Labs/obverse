@@ -12,6 +12,7 @@ import { WalletHandler } from './handlers/wallet.handler';
 import { SettingsHandler } from './handlers/setting.handler';
 import { TransactionsHandler } from './handlers/transactions.handler';
 import { BalanceHandler } from './handlers/balance.handler';
+import { SendHandler } from './handlers/send.handler';
 import { MerchantsModule } from 'src/merchants/merchants.module';
 import { PaymentLinksModule } from 'src/payment-links/payment-links.module';
 import { PaymentsModule } from 'src/payments/payments.module';
@@ -42,6 +43,7 @@ import { ConversationRepository } from './conversation.repository';
     SettingsHandler,
     TransactionsHandler,
     BalanceHandler,
+    SendHandler,
     ConversationManager,
     ConversationRepository
   ],

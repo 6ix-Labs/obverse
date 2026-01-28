@@ -12,6 +12,7 @@ export class HelpHandler {
       `💳 Wallet & Balance:\n` +
       `/wallet - View/update your wallet\n` +
       `/balance - Check your wallet balances\n` +
+      `/send - Send crypto to another wallet\n` +
       `/transactions - View transaction history\n\n` +
       `⚙️ Settings:\n` +
       `/settings - Configure bot settings\n` +
