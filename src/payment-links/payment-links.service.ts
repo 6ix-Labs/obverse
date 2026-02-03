@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { nanoid } from 'nanoid';
 import { CustomField, PaymentLink, PaymentLinkDocument } from './schemas/payment-links.schema';
 import { DatabaseException } from '../core/exceptions/database.exception';
@@ -46,6 +46,7 @@ export class PaymentLinksService {
 
       const paymentLink = new this.paymentLinkModel({
         ...data,
+        merchantId: new Types.ObjectId(data.merchantId),
         linkId,
         chain: data.chain || 'solana', // Default to Solana for backward compatibility
       });
@@ -167,7 +168,7 @@ export class PaymentLinksService {
       }
 
       return this.paymentLinkModel
-        .find({ merchantId })
+        .find({ merchantId: new Types.ObjectId(merchantId) })
         .sort({ createdAt: -1 })
         .limit(limit)
         .exec();
@@ -259,7 +260,7 @@ export class PaymentLinksService {
       }
 
       const link = await this.paymentLinkModel.findOneAndUpdate(
-        { linkId, merchantId },
+        { linkId, merchantId: new Types.ObjectId(merchantId) },
         { isActive: false },
         { new: true },
       );

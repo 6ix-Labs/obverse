@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ConversationState, ConversationStateDocument } from '../schemas/conversation-state.schema';
 // import { ConversationState, ConversationStateDocument } from './conversation-state.schema';
 
@@ -28,7 +28,7 @@ export class ConversationManager {
       { telegramId },
       {
         telegramId,
-        merchantId,
+        merchantId: new Types.ObjectId(merchantId),
         currentCommand: command,
         currentStep: step,
         data,
