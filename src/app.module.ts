@@ -10,6 +10,8 @@ import { BlockchainModule } from './blockchain/blockchain.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { WalletModule } from './wallet/wallet.module';
+import { AuthModule } from './auth/auth.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import configuration from './config/configuration';
 import leanVirtuals from 'mongoose-lean-virtuals';
 
@@ -43,7 +45,9 @@ const config = configuration();
     TransactionsModule,
     BlockchainModule,
     TelegramModule,
-    WalletModule
+    WalletModule,
+    AuthModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

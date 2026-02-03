@@ -70,3 +70,13 @@ export class Payment {
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
+
+// Indexes for performance
+// Compound index for dashboard queries - fetch payments by link, sorted by date
+PaymentSchema.index({ paymentLinkId: 1, createdAt: -1 });
+
+// Index for merchant queries
+PaymentSchema.index({ merchantId: 1, createdAt: -1 });
+
+// Index for status queries
+PaymentSchema.index({ status: 1 });

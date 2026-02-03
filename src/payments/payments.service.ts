@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Payment, PaymentDocument, PaymentStatus } from './schemas/payments.schema';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { TransactionType } from 'src/transactions/schemas/transaction.schema';
@@ -139,6 +139,8 @@ export class PaymentsService {
     }): Promise<PaymentDocument> {
         const payment = new this.paymentModel({
             ...data,
+            paymentLinkId: new Types.ObjectId(data.paymentLinkId),
+            merchantId: new Types.ObjectId(data.merchantId),
             status: PaymentStatus.PENDING,
         });
 
@@ -191,8 +193,9 @@ export class PaymentsService {
     }
 
     async findByPaymentLinkId(paymentLinkId: string): Promise<PaymentDocument[]> {
+        // Query with STRING since paymentLinkId is stored as string in DB (not ObjectId)
         return this.paymentModel
-            .find({ paymentLinkId })
+            .find({ paymentLinkId: paymentLinkId })
             .sort({ createdAt: -1 });
     }
 
@@ -201,7 +204,7 @@ export class PaymentsService {
         limit = 100,
     ): Promise<PaymentDocument[]> {
         return this.paymentModel
-            .find({ merchantId })
+            .find({ merchantId: new Types.ObjectId(merchantId) })
             .sort({ createdAt: -1 })
             .limit(limit);
     }
@@ -262,17 +265,17 @@ export class PaymentsService {
         pendingPayments: number;
         confirmedPayments: number;
     }> {
-        const matchQuery: any = { merchantId, status: PaymentStatus.CONFIRMED };
+        const matchQuery: any = { merchantId: new Types.ObjectId(merchantId), status: PaymentStatus.CONFIRMED };
         if (chain) {
             matchQuery.chain = chain;
         }
 
-        const pendingQuery: any = { merchantId, status: PaymentStatus.PENDING };
+        const pendingQuery: any = { merchantId: new Types.ObjectId(merchantId), status: PaymentStatus.PENDING };
         if (chain) {
             pendingQuery.chain = chain;
         }
 
-        const confirmedQuery: any = { merchantId, status: PaymentStatus.CONFIRMED };
+        const confirmedQuery: any = { merchantId: new Types.ObjectId(merchantId), status: PaymentStatus.CONFIRMED };
         if (chain) {
             confirmedQuery.chain = chain;
         }
@@ -309,9 +312,9 @@ export class PaymentsService {
         // First, find the payment link by code
         const paymentLink = await this.paymentLinksService.findByLinkId(linkCode);
 
-        // Then find all payments for that link
+        // Query with STRING since paymentLinkId is stored as string in DB (not ObjectId)
         return this.paymentModel
-            .find({ paymentLinkId: paymentLink._id })
+            .find({ paymentLinkId: paymentLink._id.toString() })
             .sort({ createdAt: -1 })
             .populate('paymentLinkId');
     }

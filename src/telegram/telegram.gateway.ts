@@ -10,6 +10,7 @@ import { SettingsHandler } from './handlers/setting.handler';
 import { TransactionsHandler } from './handlers/transactions.handler';
 import { BalanceHandler } from './handlers/balance.handler';
 import { SendHandler } from './handlers/send.handler';
+import { DashboardHandler } from './handlers/dashboard.handler';
 import { ConversationManager } from './conversation/conversation.manager';
 import { ConfigService } from '@nestjs/config';
 
@@ -30,6 +31,7 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
         private transactionsHandler: TransactionsHandler,
         private balanceHandler: BalanceHandler,
         private sendHandler: SendHandler,
+        private dashboardHandler: DashboardHandler,
         private conversationManager: ConversationManager,
     ) {
         const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
@@ -141,6 +143,15 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
                 await ctx.reply('❌ Sorry, something went wrong. Please try again.');
             }
         });
+
+        this.bot.command('dashboard', async (ctx) => {
+            try {
+                await this.dashboardHandler.handle(ctx);
+            } catch (error) {
+                this.logger.error(`Error in /dashboard command: ${error.message}`, error.stack);
+                await ctx.reply('❌ Sorry, something went wrong. Please try again.');
+            }
+        });
     }
 
     private registerMessageHandlers() {
@@ -214,6 +225,12 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
                 }
 
                 const data = callbackQuery.data;
+
+                // Handle dashboard callbacks
+                if (data.startsWith('dashboard:')) {
+                    await this.dashboardHandler.handleCallback(ctx);
+                    return;
+                }
 
                 // Handle send command callbacks
                 if (data.startsWith('send_wallet:')) {

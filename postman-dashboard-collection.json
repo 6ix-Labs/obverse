@@ -1,0 +1,192 @@
+{
+  "info": {
+    "name": "Obverse Dashboard API",
+    "description": "Collection for testing dashboard endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Automatically save the access token to environment variable",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"access_token\", jsonData.accessToken);",
+                  "    pm.environment.set(\"merchant_id\", jsonData.merchant._id);",
+                  "    pm.environment.set(\"payment_link_id\", jsonData.paymentLinkId);",
+                  "    console.log(\"Token saved:\", jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "PostmanRuntime/7.32.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{merchant_identifier}}\",\n  \"password\": \"{{temp_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with temporary credentials received from Telegram bot.\n\nRequired:\n- identifier: Merchant username or telegramId\n- password: Temporary password from /dashboard command"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout endpoint (client-side only, just returns success message)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/overview",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "overview"]
+            },
+            "description": "Get payment link dashboard overview with:\n- Payment link details\n- Statistics (total payments, amounts, success rate)\n- Recent payments (last 10)\n- Chart data grouped by day\n\nRequires: Valid JWT token from login"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/payments?limit=50&skip=0",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "payments"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of payments to return (default: 50)"
+                },
+                {
+                  "key": "skip",
+                  "value": "0",
+                  "description": "Number of payments to skip for pagination (default: 0)"
+                }
+              ]
+            },
+            "description": "Get paginated list of payments for the payment link.\n\nQuery parameters:\n- limit: Number of results (default: 50)\n- skip: Offset for pagination (default: 0)\n\nRequires: Valid JWT token from login"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments - Page 2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/payments?limit=50&skip=50",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "payments"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "skip",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Example of getting the second page of payments"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_identifier",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "temp_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "payment_link_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

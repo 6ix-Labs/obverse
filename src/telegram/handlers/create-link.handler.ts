@@ -172,7 +172,7 @@ export class CreateLinkHandler {
         }));
 
         const paymentLink = await this.paymentLinksService.createPaymentLink({
-            merchantId: state.merchantId,
+            merchantId: state.merchantId.toString(),
             amount,
             token,
             description,
