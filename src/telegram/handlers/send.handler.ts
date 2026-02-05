@@ -46,7 +46,8 @@ export class SendHandler {
 
     if (!merchant.wallets || merchant.wallets.length === 0) {
       await ctx.reply(
-        `⚠️ No wallets configured yet.\n\n` + `Please add a wallet using /wallet first.`,
+        `⚠️ No wallets configured yet.\n\n` +
+          `Please add a wallet using /wallet first.`,
       );
       return;
     }
@@ -94,7 +95,9 @@ export class SendHandler {
         const walletsWithErrors = walletsWithBalance.filter((w) => w.error);
 
         if (walletsWithErrors.length > 0) {
-          this.logger.error(`Found ${walletsWithErrors.length} wallets with balance fetch errors`);
+          this.logger.error(
+            `Found ${walletsWithErrors.length} wallets with balance fetch errors`,
+          );
           await ctx.reply(
             `⚠️ Unable to fetch wallet balances.\n\n` +
               `This could be due to:\n` +
@@ -133,11 +136,17 @@ export class SendHandler {
 
       buttons.push([{ text: '❌ Cancel', callback_data: 'send_cancel' }]);
 
-      await ctx.reply(`📤 Send Crypto\n\n` + `Select the wallet to send from:`, {
-        reply_markup: { inline_keyboard: buttons },
-      });
+      await ctx.reply(
+        `📤 Send Crypto\n\n` + `Select the wallet to send from:`,
+        {
+          reply_markup: { inline_keyboard: buttons },
+        },
+      );
     } catch (error) {
-      this.logger.error(`Error in showWalletSelection: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error in showWalletSelection: ${error.message}`,
+        error.stack,
+      );
       await ctx.reply('❌ Failed to load wallets. Please try again.');
     }
   }
@@ -189,10 +198,14 @@ export class SendHandler {
 
     if (tokenType === 'sol') {
       // For SOL, skip to recipient address
-      await this.conversationManager.updateState(telegramId, 'awaiting_recipient', {
-        ...state.data,
-        tokenType: 'sol',
-      });
+      await this.conversationManager.updateState(
+        telegramId,
+        'awaiting_recipient',
+        {
+          ...state.data,
+          tokenType: 'sol',
+        },
+      );
 
       await ctx.reply(
         `📬 Enter Recipient Address\n\n` +
@@ -206,7 +219,10 @@ export class SendHandler {
       try {
         await ctx.reply('🔄 Checking USDC balance...');
 
-        const tokenInfo = await this.getSPLTokenBalance(state.data.walletAddress, this.USDC_MINT);
+        const tokenInfo = await this.getSPLTokenBalance(
+          state.data.walletAddress,
+          this.USDC_MINT,
+        );
 
         if (tokenInfo.balance === 0) {
           await ctx.reply(
@@ -219,14 +235,18 @@ export class SendHandler {
         }
 
         // Store USDC info and proceed to recipient
-        await this.conversationManager.updateState(telegramId, 'awaiting_recipient', {
-          ...state.data,
-          tokenType: 'usdc',
-          tokenMint: this.USDC_MINT,
-          tokenDecimals: tokenInfo.decimals,
-          tokenBalance: tokenInfo.balance,
-          tokenSymbol: 'USDC',
-        });
+        await this.conversationManager.updateState(
+          telegramId,
+          'awaiting_recipient',
+          {
+            ...state.data,
+            tokenType: 'usdc',
+            tokenMint: this.USDC_MINT,
+            tokenDecimals: tokenInfo.decimals,
+            tokenBalance: tokenInfo.balance,
+            tokenSymbol: 'USDC',
+          },
+        );
 
         await ctx.reply(
           `✅ USDC balance: ${this.formatBalance(tokenInfo.balance, 'USDC')}\n\n` +
@@ -237,7 +257,10 @@ export class SendHandler {
           { parse_mode: 'Markdown' },
         );
       } catch (error) {
-        this.logger.error(`Error fetching USDC balance: ${error.message}`, error.stack);
+        this.logger.error(
+          `Error fetching USDC balance: ${error.message}`,
+          error.stack,
+        );
         await ctx.reply(
           `❌ Failed to fetch USDC balance.\n\n` +
             `There was a network error. Please try again.\n\n` +
@@ -271,7 +294,10 @@ export class SendHandler {
 
     // Fetch token balance
     try {
-      const tokenInfo = await this.getSPLTokenBalance(state.data.walletAddress, input);
+      const tokenInfo = await this.getSPLTokenBalance(
+        state.data.walletAddress,
+        input,
+      );
 
       if (tokenInfo.balance === 0) {
         await ctx.reply(
@@ -283,13 +309,17 @@ export class SendHandler {
       }
 
       // Store token info and proceed to recipient
-      await this.conversationManager.updateState(ctx.from.id.toString(), 'awaiting_recipient', {
-        ...state.data,
-        tokenMint: input,
-        tokenDecimals: tokenInfo.decimals,
-        tokenBalance: tokenInfo.balance,
-        tokenSymbol: tokenInfo.symbol || 'Token',
-      });
+      await this.conversationManager.updateState(
+        ctx.from.id.toString(),
+        'awaiting_recipient',
+        {
+          ...state.data,
+          tokenMint: input,
+          tokenDecimals: tokenInfo.decimals,
+          tokenBalance: tokenInfo.balance,
+          tokenSymbol: tokenInfo.symbol || 'Token',
+        },
+      );
 
       await ctx.reply(
         `✅ Token found!\n\n` +
@@ -301,7 +331,10 @@ export class SendHandler {
         { parse_mode: 'Markdown' },
       );
     } catch (error) {
-      this.logger.error(`Error fetching SPL token balance: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error fetching SPL token balance: ${error.message}`,
+        error.stack,
+      );
       await ctx.reply(
         `❌ Failed to fetch token information.\n\n` +
           `The token mint address may be invalid or there was a network error. Please try again.\n\n` +
@@ -332,10 +365,14 @@ export class SendHandler {
     }
 
     // Store recipient and move to amount input
-    await this.conversationManager.updateState(ctx.from.id.toString(), 'awaiting_amount', {
-      ...state.data,
-      recipientAddress: input,
-    });
+    await this.conversationManager.updateState(
+      ctx.from.id.toString(),
+      'awaiting_amount',
+      {
+        ...state.data,
+        recipientAddress: input,
+      },
+    );
 
     // Fetch and show balance
     let balanceText = '';
@@ -387,7 +424,11 @@ export class SendHandler {
     }
 
     // Validate amount
-    const validation = this.validateAmount(amount, balance, state.data.tokenType === 'usdc');
+    const validation = this.validateAmount(
+      amount,
+      balance,
+      state.data.tokenType === 'usdc',
+    );
 
     if (!validation.valid) {
       await ctx.reply(validation.error, { parse_mode: 'Markdown' });
@@ -395,10 +436,14 @@ export class SendHandler {
     }
 
     // Store amount and show confirmation
-    await this.conversationManager.updateState(ctx.from.id.toString(), 'awaiting_confirmation', {
-      ...state.data,
-      amount,
-    });
+    await this.conversationManager.updateState(
+      ctx.from.id.toString(),
+      'awaiting_confirmation',
+      {
+        ...state.data,
+        amount,
+      },
+    );
 
     await this.showConfirmation(ctx, {
       ...state,
@@ -407,7 +452,8 @@ export class SendHandler {
   }
 
   async showConfirmation(ctx: any, state: any) {
-    const { walletAddress, recipientAddress, amount, tokenType, tokenSymbol } = state.data;
+    const { walletAddress, recipientAddress, amount, tokenType, tokenSymbol } =
+      state.data;
 
     const maskedSource = `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}`;
     const maskedDest = `${recipientAddress.slice(0, 8)}...${recipientAddress.slice(-8)}`;
@@ -435,7 +481,15 @@ export class SendHandler {
   }
 
   async executeTransaction(ctx: any, state: any) {
-    const { walletAddress, recipientAddress, amount, tokenType, tokenMint, tokenDecimals, tokenSymbol } = state.data;
+    const {
+      walletAddress,
+      recipientAddress,
+      amount,
+      tokenType,
+      tokenMint,
+      tokenDecimals,
+      tokenSymbol,
+    } = state.data;
 
     try {
       const processingMsg = await ctx.reply('⏳ Processing transaction...');
@@ -443,7 +497,11 @@ export class SendHandler {
       // Build transaction
       let unsignedTx: string;
       if (tokenType === 'sol') {
-        unsignedTx = await this.buildSOLTransferTx(walletAddress, recipientAddress, amount);
+        unsignedTx = await this.buildSOLTransferTx(
+          walletAddress,
+          recipientAddress,
+          amount,
+        );
       } else {
         unsignedTx = await this.buildSPLTokenTransferTx(
           walletAddress,
@@ -529,11 +587,16 @@ export class SendHandler {
       // Clear conversation state
       await this.conversationManager.clearState(telegramId);
     } catch (error) {
-      this.logger.error(`Error executing transaction: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error executing transaction: ${error.message}`,
+        error.stack,
+      );
 
       // Record failed transaction with unique ID
       try {
-        const merchant = await this.merchantsService.findByTelegramId(ctx.from.id.toString());
+        const merchant = await this.merchantsService.findByTelegramId(
+          ctx.from.id.toString(),
+        );
         if (merchant) {
           // Generate unique failed transaction ID
           const failedTxId = `failed_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -554,10 +617,16 @@ export class SendHandler {
           });
 
           // Mark as failed immediately
-          await this.transactionsService.failTransaction(failedTxId, error.message, 'solana');
+          await this.transactionsService.failTransaction(
+            failedTxId,
+            error.message,
+            'solana',
+          );
         }
       } catch (recordError) {
-        this.logger.error(`Failed to record failed transaction: ${recordError.message}`);
+        this.logger.error(
+          `Failed to record failed transaction: ${recordError.message}`,
+        );
       }
 
       await ctx.reply(
@@ -570,7 +639,11 @@ export class SendHandler {
     }
   }
 
-  private async buildSOLTransferTx(from: string, to: string, amount: number): Promise<string> {
+  private async buildSOLTransferTx(
+    from: string,
+    to: string,
+    amount: number,
+  ): Promise<string> {
     const fromPubkey = new PublicKey(from);
     const toPubkey = new PublicKey(to);
     const lamports = Math.floor(amount * LAMPORTS_PER_SOL);
@@ -587,7 +660,9 @@ export class SendHandler {
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
-    return transaction.serialize({ requireAllSignatures: false }).toString('base64');
+    return transaction
+      .serialize({ requireAllSignatures: false })
+      .toString('base64');
   }
 
   private async buildSPLTokenTransferTx(
@@ -602,13 +677,20 @@ export class SendHandler {
     const mintPubkey = new PublicKey(mintAddress);
 
     // Get associated token accounts
-    const fromTokenAccount = await getAssociatedTokenAddress(mintPubkey, fromPubkey);
-    const toTokenAccount = await getAssociatedTokenAddress(mintPubkey, toPubkey);
+    const fromTokenAccount = await getAssociatedTokenAddress(
+      mintPubkey,
+      fromPubkey,
+    );
+    const toTokenAccount = await getAssociatedTokenAddress(
+      mintPubkey,
+      toPubkey,
+    );
 
     const transaction = new Transaction();
 
     // Check if recipient token account exists
-    const toAccountInfo = await this.solanaConnection.getAccountInfo(toTokenAccount);
+    const toAccountInfo =
+      await this.solanaConnection.getAccountInfo(toTokenAccount);
     if (!toAccountInfo) {
       // Create associated token account for recipient
       transaction.add(
@@ -641,13 +723,19 @@ export class SendHandler {
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
-    return transaction.serialize({ requireAllSignatures: false }).toString('base64');
+    return transaction
+      .serialize({ requireAllSignatures: false })
+      .toString('base64');
   }
 
-  private async waitForConfirmation(signature: string, maxRetries: number = 30): Promise<boolean> {
+  private async waitForConfirmation(
+    signature: string,
+    maxRetries: number = 30,
+  ): Promise<boolean> {
     for (let i = 0; i < maxRetries; i++) {
       try {
-        const status = await this.solanaConnection.getSignatureStatus(signature);
+        const status =
+          await this.solanaConnection.getSignatureStatus(signature);
 
         if (status?.value?.confirmationStatus === 'finalized') {
           return true;
@@ -660,7 +748,9 @@ export class SendHandler {
         // Wait 2 seconds before next check
         await new Promise((resolve) => setTimeout(resolve, 2000));
       } catch (error) {
-        this.logger.warn(`Error checking confirmation (attempt ${i + 1}): ${error.message}`);
+        this.logger.warn(
+          `Error checking confirmation (attempt ${i + 1}): ${error.message}`,
+        );
       }
     }
 
@@ -686,9 +776,12 @@ export class SendHandler {
       const walletPubkey = new PublicKey(walletAddress);
       const mintPubkey = new PublicKey(mintAddress);
 
-      const tokenAccounts = await this.solanaConnection.getTokenAccountsByOwner(walletPubkey, {
-        mint: mintPubkey,
-      });
+      const tokenAccounts = await this.solanaConnection.getTokenAccountsByOwner(
+        walletPubkey,
+        {
+          mint: mintPubkey,
+        },
+      );
 
       if (tokenAccounts.value.length === 0) {
         return { balance: 0, decimals: 0 };

@@ -76,7 +76,11 @@ export class Transaction {
   walletAddress?: string; // Which merchant wallet was used
 
   // Transaction status
-  @Prop({ default: TransactionStatus.PENDING, index: true, enum: TransactionStatus })
+  @Prop({
+    default: TransactionStatus.PENDING,
+    index: true,
+    enum: TransactionStatus,
+  })
   status: TransactionStatus;
 
   @Prop()

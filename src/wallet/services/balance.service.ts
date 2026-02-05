@@ -1,14 +1,28 @@
 // src/wallet/services/balance.service.ts
 
-import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import type { ConfigType } from '@nestjs/config';
 import { WALLET_REPOSITORY } from '../interfaces/wallet-repository.interface';
 import type { IWalletRepository } from '../interfaces/wallet-repository.interface';
-import { Transaction, TransactionDocument, TransactionType } from '../../transactions/schemas/transaction.schema';
-import { BalanceResponseDto, TokenBalance, TransactionSummary } from '../dto/wallet.dto';
+import {
+  Transaction,
+  TransactionDocument,
+  TransactionType,
+} from '../../transactions/schemas/transaction.schema';
+import {
+  BalanceResponseDto,
+  TokenBalance,
+  TransactionSummary,
+} from '../dto/wallet.dto';
 import turnkeyConfig from '../config/turnkey.config';
 
 @Injectable()
@@ -35,7 +49,10 @@ export class BalanceService {
    * Get comprehensive balance for a user
    * Includes on-chain balance and transaction history summary
    */
-  async getBalance(odaUserId: string, chain = 'solana'): Promise<BalanceResponseDto> {
+  async getBalance(
+    odaUserId: string,
+    chain = 'solana',
+  ): Promise<BalanceResponseDto> {
     try {
       // Validate input
       if (!odaUserId || odaUserId.trim().length === 0) {
@@ -44,7 +61,9 @@ export class BalanceService {
 
       // Only support Solana for now
       if (chain !== 'solana') {
-        throw new BadRequestException('Only Solana chain is currently supported');
+        throw new BadRequestException(
+          'Only Solana chain is currently supported',
+        );
       }
 
       // Get wallet from database
@@ -53,7 +72,9 @@ export class BalanceService {
         throw new NotFoundException(`Wallet not found for user: ${odaUserId}`);
       }
 
-      this.logger.log(`Fetching balance for user ${odaUserId}, wallet: ${wallet.solanaAddress}`);
+      this.logger.log(
+        `Fetching balance for user ${odaUserId}, wallet: ${wallet.solanaAddress}`,
+      );
 
       // Fetch on-chain balance and transaction summary in parallel
       const [onChainData, transactionSummary] = await Promise.all([
@@ -102,10 +123,15 @@ export class BalanceService {
       const balance = await this.solanaConnection.getBalance(publicKey);
 
       // Get token accounts (SPL tokens like USDC, USDT)
-      const tokenAccounts = await this.solanaConnection.getParsedTokenAccountsByOwner(
-        publicKey,
-        { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }, // SPL Token Program
-      );
+      const tokenAccounts =
+        await this.solanaConnection.getParsedTokenAccountsByOwner(
+          publicKey,
+          {
+            programId: new PublicKey(
+              'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+            ),
+          }, // SPL Token Program
+        );
 
       const tokens: TokenBalance[] = tokenAccounts.value
         .filter((account) => {
@@ -224,11 +250,11 @@ export class BalanceService {
   private getTokenSymbol(mint: string): string {
     const knownTokens: Record<string, string> = {
       // USDC on Solana mainnet
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
+      EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 'USDC',
       // USDT on Solana mainnet
-      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 'USDT',
+      Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB: 'USDT',
       // Wrapped SOL
-      'So11111111111111111111111111111111111111112': 'SOL',
+      So11111111111111111111111111111111111111112: 'SOL',
       // Add more tokens as needed
     };
 

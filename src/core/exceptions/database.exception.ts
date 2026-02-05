@@ -1,7 +1,10 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class DatabaseException extends HttpException {
-  constructor(message: string = 'Database operation failed', operation?: string) {
+  constructor(
+    message: string = 'Database operation failed',
+    operation?: string,
+  ) {
     super(
       {
         message,

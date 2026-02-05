@@ -21,7 +21,7 @@ export class MerchantService {
     private readonly walletService: WalletService,
     @Inject(WALLET_REPOSITORY)
     private readonly walletRepository: IWalletRepository,
-  ) { }
+  ) {}
 
   /**
    * Create merchant with Turnkey wallet on /start
@@ -67,7 +67,9 @@ export class MerchantService {
 
     await merchant.save();
 
-    this.logger.log(`Created merchant ${telegramId} with wallet ${walletResponse.solanaAddress}`);
+    this.logger.log(
+      `Created merchant ${telegramId} with wallet ${walletResponse.solanaAddress}`,
+    );
 
     return {
       merchant,
@@ -76,27 +78,33 @@ export class MerchantService {
   }
 
   /**
-  * Find merchant by telegramId
-  */
+   * Find merchant by telegramId
+   */
   async findByTelegramId(telegramId: string): Promise<MerchantDocument | null> {
     return this.merchantModel.findOne({ telegramId }).exec();
   }
 
-  async findById(id: string | Types.ObjectId): Promise<MerchantDocument | null> {
+  async findById(
+    id: string | Types.ObjectId,
+  ): Promise<MerchantDocument | null> {
     return this.merchantModel.findById(id).exec();
   }
 
   /**
- * Find merchant by wallet address
- */
-  async findByWalletAddress(walletAddress: string): Promise<MerchantDocument | null> {
+   * Find merchant by wallet address
+   */
+  async findByWalletAddress(
+    walletAddress: string,
+  ): Promise<MerchantDocument | null> {
     return this.merchantModel.findOne({ walletAddress }).exec();
   }
 
   /**
- * Find merchant by farcaster FID
- */
-  async findByFarcasterFid(farcasterFid: string): Promise<MerchantDocument | null> {
+   * Find merchant by farcaster FID
+   */
+  async findByFarcasterFid(
+    farcasterFid: string,
+  ): Promise<MerchantDocument | null> {
     return this.merchantModel.findOne({ farcasterFid }).exec();
   }
 
@@ -114,12 +122,19 @@ export class MerchantService {
       const wallet = await this.walletService.getWalletDocument(telegramId);
       return {
         merchant: existing,
-        wallet: wallet ? await this.walletService.getWalletByUserId(telegramId) : null,
+        wallet: wallet
+          ? await this.walletService.getWalletByUserId(telegramId)
+          : null,
         isNew: false,
       };
     }
 
-    const result = await this.createMerchant(telegramId, username, firstName, lastName);
+    const result = await this.createMerchant(
+      telegramId,
+      username,
+      firstName,
+      lastName,
+    );
     return {
       ...result,
       isNew: true,
@@ -129,7 +144,9 @@ export class MerchantService {
   /**
    * Get merchant by telegramId
    */
-  async getMerchantByTelegramId(telegramId: string): Promise<MerchantDocument | null> {
+  async getMerchantByTelegramId(
+    telegramId: string,
+  ): Promise<MerchantDocument | null> {
     return this.merchantModel.findOne({ telegramId }).exec();
   }
 
@@ -186,7 +203,11 @@ export class MerchantService {
   /**
    * Sign and send transaction for merchant
    */
-  async sendTransaction(telegramId: string, unsignedTransaction: string, rpcUrl?: string) {
+  async sendTransaction(
+    telegramId: string,
+    unsignedTransaction: string,
+    rpcUrl?: string,
+  ) {
     const merchant = await this.getMerchantByTelegramId(telegramId);
     if (!merchant) {
       throw new NotFoundException(`Merchant not found: ${telegramId}`);
@@ -295,7 +316,9 @@ export class MerchantService {
 
     await merchant.save();
 
-    this.logger.log(`Updated wallet for merchant ${telegramId}: ${walletAddress}`);
+    this.logger.log(
+      `Updated wallet for merchant ${telegramId}: ${walletAddress}`,
+    );
 
     return merchant;
   }
@@ -326,7 +349,6 @@ export class MerchantService {
       .exec();
   }
 
-
   async updateSettings(
     telegramId: string,
     settings: {
@@ -338,11 +360,7 @@ export class MerchantService {
     },
   ): Promise<MerchantDocument> {
     const merchant = await this.merchantModel
-      .findOneAndUpdate(
-        { telegramId },
-        { $set: settings },
-        { new: true },
-      )
+      .findOneAndUpdate({ telegramId }, { $set: settings }, { new: true })
       .exec();
 
     if (!merchant) {
@@ -358,7 +376,9 @@ export class MerchantService {
    * Check if merchant exists
    */
   async exists(telegramId: string): Promise<boolean> {
-    const count = await this.merchantModel.countDocuments({ telegramId }).exec();
+    const count = await this.merchantModel
+      .countDocuments({ telegramId })
+      .exec();
     return count > 0;
   }
 

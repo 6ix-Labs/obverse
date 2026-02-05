@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { MerchantService } from 'src/merchants/merchants.service';
 import { TransactionsService } from 'src/transactions/transactions.service';
-import { TransactionStatus, TransactionType } from 'src/transactions/schemas/transaction.schema';
+import {
+  TransactionStatus,
+  TransactionType,
+} from 'src/transactions/schemas/transaction.schema';
 
 @Injectable()
 export class TransactionsHandler {
@@ -58,7 +61,12 @@ export class TransactionsHandler {
     message += `Recent transactions:\n\n`;
 
     transactions.forEach((tx, index) => {
-      const statusEmoji = tx.status === TransactionStatus.CONFIRMED ? '✅' : tx.status === TransactionStatus.PENDING ? '⏳' : '❌';
+      const statusEmoji =
+        tx.status === TransactionStatus.CONFIRMED
+          ? '✅'
+          : tx.status === TransactionStatus.PENDING
+            ? '⏳'
+            : '❌';
       const typeEmoji = this.getTypeEmoji(tx.type);
 
       let txLine = `${index + 1 + skip}. ${statusEmoji} ${typeEmoji} `;
@@ -86,7 +94,10 @@ export class TransactionsHandler {
     const navRow: any[] = [];
 
     if (page > 0) {
-      navRow.push({ text: '⬅️ Previous', callback_data: `tx_page:${page - 1}` });
+      navRow.push({
+        text: '⬅️ Previous',
+        callback_data: `tx_page:${page - 1}`,
+      });
     }
 
     if (skip + limit < totalCount) {
@@ -154,7 +165,12 @@ export class TransactionsHandler {
     let message = `📊 ${this.getTypeLabel(type as TransactionType)} Transactions\n\n`;
 
     transactions.forEach((tx, index) => {
-      const statusEmoji = tx.status === TransactionStatus.CONFIRMED ? '✅' : tx.status === TransactionStatus.PENDING ? '⏳' : '❌';
+      const statusEmoji =
+        tx.status === TransactionStatus.CONFIRMED
+          ? '✅'
+          : tx.status === TransactionStatus.PENDING
+            ? '⏳'
+            : '❌';
 
       let txLine = `${index + 1}. ${statusEmoji} `;
 
@@ -173,7 +189,9 @@ export class TransactionsHandler {
     });
 
     const keyboard = {
-      inline_keyboard: [[{ text: '« Back to All', callback_data: 'tx_refresh' }]],
+      inline_keyboard: [
+        [{ text: '« Back to All', callback_data: 'tx_refresh' }],
+      ],
     };
 
     await ctx.reply(message, { reply_markup: keyboard });

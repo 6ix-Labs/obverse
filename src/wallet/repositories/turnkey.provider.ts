@@ -3,8 +3,14 @@
 import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { Turnkey } from '@turnkey/sdk-server';
-import type { ITurnkeyProvider, CreateSubOrgWithWalletParams } from '../interfaces/turnkey-provider.interface';
-import type { CreateWalletResult, SignTransactionResult } from '../entities/wallet.entity';
+import type {
+  ITurnkeyProvider,
+  CreateSubOrgWithWalletParams,
+} from '../interfaces/turnkey-provider.interface';
+import type {
+  CreateWalletResult,
+  SignTransactionResult,
+} from '../entities/wallet.entity';
 import turnkeyConfig from '../config/turnkey.config';
 
 // Solana account parameters for wallet creation
@@ -51,33 +57,39 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
   async createSubOrganizationWithWallet(
     params: CreateSubOrgWithWalletParams,
   ): Promise<CreateWalletResult> {
-    const { userName = 'Obverse User', userEmail, walletName = 'Obverse Wallet' } = params;
+    const {
+      userName = 'Obverse User',
+      userEmail,
+      walletName = 'Obverse Wallet',
+    } = params;
 
     try {
       this.logger.debug(`Creating sub-organization for user: ${userName}`);
 
-      const response = await this.turnkeyClient.apiClient().createSubOrganization({
-        organizationId: this.config.defaultOrganizationId,
-        subOrganizationName: `${userName} - ${Date.now()}`,
-        rootUsers: [
-          {
-            userName,
-            userEmail: userEmail || `${Date.now()}@obverse.app`,
-            apiKeys: [],
-            authenticators: [],
-            oauthProviders: [],
-          },
-        ],
-        rootQuorumThreshold: 1,
-        wallet: {
-          walletName,
-          accounts: [
-            SOLANA_WALLET_ACCOUNT,
-            // Uncomment if you want Ethereum support too
-            // ETHEREUM_WALLET_ACCOUNT,
+      const response = await this.turnkeyClient
+        .apiClient()
+        .createSubOrganization({
+          organizationId: this.config.defaultOrganizationId,
+          subOrganizationName: `${userName} - ${Date.now()}`,
+          rootUsers: [
+            {
+              userName,
+              userEmail: userEmail || `${Date.now()}@obverse.app`,
+              apiKeys: [],
+              authenticators: [],
+              oauthProviders: [],
+            },
           ],
-        },
-      });
+          rootQuorumThreshold: 1,
+          wallet: {
+            walletName,
+            accounts: [
+              SOLANA_WALLET_ACCOUNT,
+              // Uncomment if you want Ethereum support too
+              // ETHEREUM_WALLET_ACCOUNT,
+            ],
+          },
+        });
 
       const subOrganizationId = response.subOrganizationId;
       const walletId = response.wallet?.walletId;
@@ -88,7 +100,9 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
       // const ethereumAddress = addresses[1]; // Uncomment if using Ethereum
 
       if (!subOrganizationId || !walletId || !solanaAddress) {
-        throw new Error('Failed to extract wallet details from Turnkey response');
+        throw new Error(
+          'Failed to extract wallet details from Turnkey response',
+        );
       }
 
       this.logger.log(
@@ -102,7 +116,10 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
         // ethereumAddress,
       };
     } catch (error) {
-      this.logger.error(`Failed to create sub-organization: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create sub-organization: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -135,7 +152,10 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
 
       return { signedTransaction };
     } catch (error) {
-      this.logger.error(`Failed to sign transaction: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to sign transaction: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -150,7 +170,9 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
     rpcUrl?: string,
   ): Promise<string> {
     try {
-      this.logger.debug(`Signing and sending transaction for address: ${walletAddress}`);
+      this.logger.debug(
+        `Signing and sending transaction for address: ${walletAddress}`,
+      );
 
       // First sign the transaction
       const { signedTransaction } = await this.signSolanaTransaction(
@@ -173,7 +195,10 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
 
       return signature;
     } catch (error) {
-      this.logger.error(`Failed to sign and send transaction: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to sign and send transaction: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -196,7 +221,10 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
         addressFormat: account.addressFormat,
       }));
     } catch (error) {
-      this.logger.error(`Failed to get wallet accounts: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to get wallet accounts: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -217,7 +245,10 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
         walletName: wallet.walletName,
       }));
     } catch (error) {
-      this.logger.error(`Failed to list wallets: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to list wallets: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

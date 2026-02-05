@@ -5,13 +5,12 @@ import { Model } from 'mongoose';
 import { CoreRepository } from 'src/core/common/repository.core';
 import { Merchant, MerchantDocument } from './schema/merchant.schema';
 
-
 @Injectable()
 export class MerchantRepository extends CoreRepository<MerchantDocument> {
-    constructor(
-        @InjectModel(Merchant.name)
-        merchantModel: Model<MerchantDocument>
-    ) {
-        super(merchantModel);
-    }
+  constructor(
+    @InjectModel(Merchant.name)
+    merchantModel: Model<MerchantDocument>,
+  ) {
+    super(merchantModel);
+  }
 }

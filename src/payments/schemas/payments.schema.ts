@@ -1,4 +1,3 @@
-
 // src/modules/payments/schemas/payment.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
@@ -80,3 +79,7 @@ PaymentSchema.index({ merchantId: 1, createdAt: -1 });
 
 // Index for status queries
 PaymentSchema.index({ status: 1 });
+
+// UNIQUE compound index to prevent duplicate payments for the same transaction
+// This eliminates race conditions where multiple requests could create duplicate payments
+PaymentSchema.index({ txSignature: 1, chain: 1 }, { unique: true });

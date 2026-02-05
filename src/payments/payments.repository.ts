@@ -7,10 +7,10 @@ import { Payment, PaymentDocument } from './schemas/payments.schema';
 
 @Injectable()
 export class PaymentRepository extends CoreRepository<PaymentDocument> {
-    constructor(
-        @InjectModel(Payment.name)
-        payment: Model<PaymentDocument>
-    ) {
-        super(payment)
-    }
+  constructor(
+    @InjectModel(Payment.name)
+    payment: Model<PaymentDocument>,
+  ) {
+    super(payment);
+  }
 }

@@ -15,13 +15,11 @@ export class BalanceHandler {
     base: 'https://mainnet.base.org',
   };
 
-  constructor(
-    private merchantsService: MerchantService,
-  ) {
+  constructor(private merchantsService: MerchantService) {
     // Initialize Solana connection (you can make this configurable)
     this.solanaConnection = new Connection(
       process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-      'confirmed'
+      'confirmed',
     );
   }
 
@@ -37,7 +35,7 @@ export class BalanceHandler {
     if (!merchant.wallets || merchant.wallets.length === 0) {
       await ctx.reply(
         `⚠️ No wallets configured yet.\n\n` +
-        `Please add a wallet using /wallet first.`
+          `Please add a wallet using /wallet first.`,
       );
       return;
     }
@@ -50,7 +48,8 @@ export class BalanceHandler {
       for (const wallet of merchant.wallets) {
         if (!wallet.isActive) continue;
 
-        const chainName = wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
+        const chainName =
+          wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
         message += `📍 ${chainName} (${wallet.label || 'Wallet'})\n`;
         message += `\`${wallet.address.slice(0, 8)}...${wallet.address.slice(-8)}\`\n`;
 
@@ -64,12 +63,17 @@ export class BalanceHandler {
             // message += `💵 USDC: ${usdcBalance.toFixed(2)}\n`;
           } else {
             // EVM chains
-            const balance = await this.getEVMBalance(wallet.address, wallet.chain);
+            const balance = await this.getEVMBalance(
+              wallet.address,
+              wallet.chain,
+            );
             const symbol = this.getNativeSymbol(wallet.chain);
             message += `💵 Balance: ${balance} ${symbol}\n`;
           }
         } catch (error) {
-          this.logger.error(`Failed to fetch balance for ${wallet.chain}: ${error.message}`);
+          this.logger.error(
+            `Failed to fetch balance for ${wallet.chain}: ${error.message}`,
+          );
           message += `❌ Failed to fetch balance\n`;
         }
 
@@ -79,9 +83,11 @@ export class BalanceHandler {
       message += `\n🔄 Use /balance to refresh`;
 
       await ctx.reply(message, { parse_mode: 'Markdown' });
-
     } catch (error) {
-      this.logger.error(`Error fetching balances: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error fetching balances: ${error.message}`,
+        error.stack,
+      );
       await ctx.reply('❌ Failed to fetch balances. Please try again later.');
     }
   }
@@ -92,7 +98,7 @@ export class BalanceHandler {
       const balance = await this.solanaConnection.getBalance(publicKey);
 
       return {
-        sol: balance / LAMPORTS_PER_SOL
+        sol: balance / LAMPORTS_PER_SOL,
       };
     } catch (error) {
       this.logger.error(`Error fetching Solana balance: ${error.message}`);

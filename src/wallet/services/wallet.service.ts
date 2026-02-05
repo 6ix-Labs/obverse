@@ -29,17 +29,20 @@ export class WalletService {
     private readonly turnkeyProvider: ITurnkeyProvider,
     @Inject(turnkeyConfig.KEY)
     private readonly config: ConfigType<typeof turnkeyConfig>,
-  ) { }
+  ) {}
 
   /**
    * Create a new wallet for a user (called when user does /start)
    * Returns existing wallet if one already exists for this user
    */
-  async createWalletForUser(dto: CreateUserWalletDto): Promise<WalletResponseDto> {
+  async createWalletForUser(
+    dto: CreateUserWalletDto,
+  ): Promise<WalletResponseDto> {
     const { odaUserId, userName, userEmail } = dto;
 
     // Check if wallet already exists for this user
-    const existingWallet = await this.walletRepository.findByOdaUserId(odaUserId);
+    const existingWallet =
+      await this.walletRepository.findByOdaUserId(odaUserId);
     if (existingWallet) {
       this.logger.log(`Wallet already exists for user: ${odaUserId}`);
       return this.toWalletResponse(existingWallet);
@@ -64,7 +67,9 @@ export class WalletService {
       ethereumAddress,
     });
 
-    this.logger.log(`Wallet created successfully for user: ${odaUserId}, address: ${solanaAddress}`);
+    this.logger.log(
+      `Wallet created successfully for user: ${odaUserId}, address: ${solanaAddress}`,
+    );
 
     return this.toWalletResponse(userWallet);
   }
@@ -84,9 +89,12 @@ export class WalletService {
    * Get wallet by Solana address
    */
   async getWalletByAddress(solanaAddress: string): Promise<WalletResponseDto> {
-    const wallet = await this.walletRepository.findBySolanaAddress(solanaAddress);
+    const wallet =
+      await this.walletRepository.findBySolanaAddress(solanaAddress);
     if (!wallet) {
-      throw new NotFoundException(`Wallet not found for address: ${solanaAddress}`);
+      throw new NotFoundException(
+        `Wallet not found for address: ${solanaAddress}`,
+      );
     }
     return this.toWalletResponse(wallet);
   }
@@ -150,8 +158,12 @@ export class WalletService {
   /**
    * Get or create wallet for a user (idempotent operation for /start)
    */
-  async getOrCreateWallet(dto: CreateUserWalletDto): Promise<WalletResponseDto> {
-    const existingWallet = await this.walletRepository.findByOdaUserId(dto.odaUserId);
+  async getOrCreateWallet(
+    dto: CreateUserWalletDto,
+  ): Promise<WalletResponseDto> {
+    const existingWallet = await this.walletRepository.findByOdaUserId(
+      dto.odaUserId,
+    );
     if (existingWallet) {
       return this.toWalletResponse(existingWallet);
     }

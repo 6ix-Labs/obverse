@@ -6,7 +6,7 @@ type QueryOptions = mongoose.QueryOptions;
 type PopulateOptions = mongoose.PopulateOptions;
 
 export abstract class CoreRepository<T extends Document> {
-  constructor(protected readonly entityModel: Model<T>) { }
+  constructor(protected readonly entityModel: Model<T>) {}
 
   async findOne(
     entityFilterQuery: FilterQuery<T>,

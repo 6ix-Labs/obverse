@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConversationState, ConversationStateDocument } from '../schemas/conversation-state.schema';
+import {
+  ConversationState,
+  ConversationStateDocument,
+} from '../schemas/conversation-state.schema';
 // import { ConversationState, ConversationStateDocument } from './conversation-state.schema';
 
 @Injectable()
@@ -9,9 +12,11 @@ export class ConversationManager {
   constructor(
     @InjectModel(ConversationState.name)
     private conversationStateModel: Model<ConversationStateDocument>,
-  ) { }
+  ) {}
 
-  async getState(telegramId: string): Promise<ConversationStateDocument | null> {
+  async getState(
+    telegramId: string,
+  ): Promise<ConversationStateDocument | null> {
     return this.conversationStateModel.findOne({ telegramId });
   }
 

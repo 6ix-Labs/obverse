@@ -7,7 +7,7 @@ export class WalletHandler {
   constructor(
     private merchantsService: MerchantService,
     private conversationManager: ConversationManager,
-  ) { }
+  ) {}
 
   async handle(ctx: any) {
     const telegramId = ctx.from.id.toString();
@@ -25,7 +25,8 @@ export class WalletHandler {
       // Show all wallets with chain info
       merchant.wallets.forEach((wallet, index) => {
         const statusEmoji = wallet.isActive ? '✅' : '❌';
-        const chainName = wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
+        const chainName =
+          wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
         const maskedAddress = `${wallet.address.slice(0, 8)}...${wallet.address.slice(-8)}`;
 
         message += `${index + 1}. ${statusEmoji} ${chainName}\n`;
@@ -56,7 +57,7 @@ export class WalletHandler {
 
     await ctx.reply(message, {
       parse_mode: 'Markdown',
-      reply_markup: keyboard
+      reply_markup: keyboard,
     });
   }
 
@@ -71,19 +72,21 @@ export class WalletHandler {
     // If merchant has multiple wallets, let them choose which to update
     if (merchant.wallets && merchant.wallets.length > 1) {
       const buttons = merchant.wallets.map((wallet, index) => {
-        const chainName = wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
-        return [{
-          text: `${chainName} - ${wallet.label || 'Wallet'}`,
-          callback_data: `update_wallet_chain:${wallet.chain}`,
-        }];
+        const chainName =
+          wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
+        return [
+          {
+            text: `${chainName} - ${wallet.label || 'Wallet'}`,
+            callback_data: `update_wallet_chain:${wallet.chain}`,
+          },
+        ];
       });
 
       buttons.push([{ text: '« Cancel', callback_data: 'cancel' }]);
 
-      await ctx.reply(
-        `✏️ Which wallet would you like to update?`,
-        { reply_markup: { inline_keyboard: buttons } }
-      );
+      await ctx.reply(`✏️ Which wallet would you like to update?`, {
+        reply_markup: { inline_keyboard: buttons },
+      });
       return;
     }
 
@@ -110,20 +113,18 @@ export class WalletHandler {
       merchant._id.toString(),
       'wallet',
       'awaiting_new_wallet',
-      { chain }
+      { chain },
     );
 
     const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
-    const exampleAddress = chain === 'solana'
-      ? '9xQe...7Kkp'
-      : '0x742d...35Aa';
+    const exampleAddress = chain === 'solana' ? '9xQe...7Kkp' : '0x742d...35Aa';
 
     await ctx.reply(
       `✏️ Update ${chainName} Wallet Address\n\n` +
-      `Please send your new ${chainName} wallet address.\n\n` +
-      `Example: \`${exampleAddress}\`\n\n` +
-      `Type \`cancel\` to abort.`,
-      { parse_mode: 'Markdown' }
+        `Please send your new ${chainName} wallet address.\n\n` +
+        `Example: \`${exampleAddress}\`\n\n` +
+        `Type \`cancel\` to abort.`,
+      { parse_mode: 'Markdown' },
     );
   }
 
@@ -152,15 +153,16 @@ export class WalletHandler {
 
     if (!isValid) {
       const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
-      const format = chain === 'solana'
-        ? '32-44 characters (base58)'
-        : '0x followed by 40 hexadecimal characters';
+      const format =
+        chain === 'solana'
+          ? '32-44 characters (base58)'
+          : '0x followed by 40 hexadecimal characters';
 
       await ctx.reply(
         `❌ Invalid ${chainName} wallet address.\n\n` +
-        `Please send a valid ${chainName} address (${format}).\n` +
-        `Or type \`cancel\` to abort.`,
-        { parse_mode: 'Markdown' }
+          `Please send a valid ${chainName} address (${format}).\n` +
+          `Or type \`cancel\` to abort.`,
+        { parse_mode: 'Markdown' },
       );
       return;
     }
@@ -170,15 +172,16 @@ export class WalletHandler {
     await this.conversationManager.clearState(ctx.from.id.toString());
 
     const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
-    const maskedAddress = chain === 'solana'
-      ? `${input.slice(0, 8)}...${input.slice(-8)}`
-      : `${input.slice(0, 6)}...${input.slice(-4)}`;
+    const maskedAddress =
+      chain === 'solana'
+        ? `${input.slice(0, 8)}...${input.slice(-8)}`
+        : `${input.slice(0, 6)}...${input.slice(-4)}`;
 
     await ctx.reply(
       `✅ ${chainName} wallet address updated!\n\n` +
-      `New address:\n\`${maskedAddress}\`\n\n` +
-      `Payments on ${chainName} will be sent to this address.`,
-      { parse_mode: 'Markdown' }
+        `New address:\n\`${maskedAddress}\`\n\n` +
+        `Payments on ${chainName} will be sent to this address.`,
+      { parse_mode: 'Markdown' },
     );
   }
 
@@ -191,32 +194,38 @@ export class WalletHandler {
     await ctx.answerCbQuery();
 
     // Show available chains to add
-    const existingChains = merchant.wallets?.map(w => w.chain) || [];
-    const availableChains = ['solana', 'ethereum', 'base', 'polygon', 'arbitrum']
-      .filter(chain => !existingChains.includes(chain));
+    const existingChains = merchant.wallets?.map((w) => w.chain) || [];
+    const availableChains = [
+      'solana',
+      'ethereum',
+      'base',
+      'polygon',
+      'arbitrum',
+    ].filter((chain) => !existingChains.includes(chain));
 
     if (availableChains.length === 0) {
       await ctx.reply(
         `✅ You've already added wallets for all supported chains.\n\n` +
-        `You can update existing wallets using the "Update Wallet" option.`
+          `You can update existing wallets using the "Update Wallet" option.`,
       );
       return;
     }
 
-    const buttons = availableChains.map(chain => {
+    const buttons = availableChains.map((chain) => {
       const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
-      return [{
-        text: chainName,
-        callback_data: `add_wallet_chain:${chain}`,
-      }];
+      return [
+        {
+          text: chainName,
+          callback_data: `add_wallet_chain:${chain}`,
+        },
+      ];
     });
 
     buttons.push([{ text: '« Cancel', callback_data: 'cancel' }]);
 
     await ctx.reply(
-      `➕ Add Wallet\n\n` +
-      `Select which blockchain to add a wallet for:`,
-      { reply_markup: { inline_keyboard: buttons } }
+      `➕ Add Wallet\n\n` + `Select which blockchain to add a wallet for:`,
+      { reply_markup: { inline_keyboard: buttons } },
     );
   }
 
@@ -233,20 +242,18 @@ export class WalletHandler {
       merchant._id.toString(),
       'wallet',
       'awaiting_new_wallet',
-      { chain, isAdding: true }
+      { chain, isAdding: true },
     );
 
     const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
-    const exampleAddress = chain === 'solana'
-      ? '9xQe...7Kkp'
-      : '0x742d...35Aa';
+    const exampleAddress = chain === 'solana' ? '9xQe...7Kkp' : '0x742d...35Aa';
 
     await ctx.reply(
       `➕ Add ${chainName} Wallet\n\n` +
-      `Please send your ${chainName} wallet address.\n\n` +
-      `Example: \`${exampleAddress}\`\n\n` +
-      `Type \`cancel\` to abort.`,
-      { parse_mode: 'Markdown' }
+        `Please send your ${chainName} wallet address.\n\n` +
+        `Example: \`${exampleAddress}\`\n\n` +
+        `Type \`cancel\` to abort.`,
+      { parse_mode: 'Markdown' },
     );
   }
 }

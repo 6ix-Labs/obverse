@@ -7,6 +7,6 @@ import { MerchantsModule } from 'src/merchants/merchants.module';
 @Module({
   imports: [PaymentsModule, MerchantsModule],
   providers: [BlockchainService],
-  controllers: [BlockchainController]
+  controllers: [BlockchainController],
 })
 export class BlockchainModule {}
