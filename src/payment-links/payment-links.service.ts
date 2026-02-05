@@ -1,8 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { nanoid } from 'nanoid';
-import { CustomField, PaymentLink, PaymentLinkDocument } from './schemas/payment-links.schema';
+import {
+  CustomField,
+  PaymentLink,
+  PaymentLinkDocument,
+} from './schemas/payment-links.schema';
 import { DatabaseException } from '../core/exceptions/database.exception';
 
 @Injectable()
@@ -10,8 +19,9 @@ export class PaymentLinksService {
   private readonly logger = new Logger(PaymentLinksService.name);
 
   constructor(
-    @InjectModel(PaymentLink.name) private paymentLinkModel: Model<PaymentLinkDocument>,
-  ) { }
+    @InjectModel(PaymentLink.name)
+    private paymentLinkModel: Model<PaymentLinkDocument>,
+  ) {}
 
   async createPaymentLink(data: {
     merchantId: string;
@@ -38,6 +48,14 @@ export class PaymentLinksService {
         throw new BadRequestException('Token is required');
       }
 
+      // Validate minimum amount based on token type
+      const stablecoins = ['USDC', 'USDT', 'BUSD', 'DAI', 'TUSD'];
+      if (stablecoins.includes(data.token.toUpperCase()) && data.amount < 0.005) {
+        throw new BadRequestException(
+          `Minimum amount for ${data.token} is 0.005`,
+        );
+      }
+
       if (data.expiresAt && data.expiresAt < new Date()) {
         throw new BadRequestException('Expiration date must be in the future');
       }
@@ -51,7 +69,9 @@ export class PaymentLinksService {
         chain: data.chain || 'solana', // Default to Solana for backward compatibility
       });
 
-      this.logger.log(`Creating payment link ${linkId} for merchant ${data.merchantId}`);
+      this.logger.log(
+        `Creating payment link ${linkId} for merchant ${data.merchantId}`,
+      );
 
       const savedLink = await paymentLink.save();
 
@@ -77,7 +97,10 @@ export class PaymentLinksService {
         throw new BadRequestException('Link ID is required');
       }
 
-      const link = await this.paymentLinkModel.findOne({ linkId, isActive: true });
+      const link = await this.paymentLinkModel.findOne({
+        linkId,
+        isActive: true,
+      });
 
       if (!link) {
         this.logger.warn(`Payment link not found: ${linkId}`);
@@ -157,7 +180,10 @@ export class PaymentLinksService {
     }
   }
 
-  async findByMerchantId(merchantId: string, limit = 50): Promise<PaymentLinkDocument[]> {
+  async findByMerchantId(
+    merchantId: string,
+    limit = 50,
+  ): Promise<PaymentLinkDocument[]> {
     try {
       if (!merchantId || merchantId.trim().length === 0) {
         throw new BadRequestException('Merchant ID is required');
@@ -210,7 +236,10 @@ export class PaymentLinksService {
         `Error finding payment link by ID ${id}: ${error.message}`,
         error.stack,
       );
-      throw new DatabaseException('Failed to retrieve payment link', 'findById');
+      throw new DatabaseException(
+        'Failed to retrieve payment link',
+        'findById',
+      );
     }
   }
 
@@ -249,7 +278,10 @@ export class PaymentLinksService {
     }
   }
 
-  async deactivateLink(linkId: string, merchantId: string): Promise<PaymentLinkDocument> {
+  async deactivateLink(
+    linkId: string,
+    merchantId: string,
+  ): Promise<PaymentLinkDocument> {
     try {
       if (!linkId || linkId.trim().length === 0) {
         throw new BadRequestException('Link ID is required');
@@ -283,7 +315,10 @@ export class PaymentLinksService {
         `Error deactivating payment link ${linkId}: ${error.message}`,
         error.stack,
       );
-      throw new DatabaseException('Failed to deactivate payment link', 'update');
+      throw new DatabaseException(
+        'Failed to deactivate payment link',
+        'update',
+      );
     }
   }
 
@@ -316,7 +351,10 @@ export class PaymentLinksService {
         `Error getting stats for payment link ${linkId}: ${error.message}`,
         error.stack,
       );
-      throw new DatabaseException('Failed to retrieve payment link statistics', 'stats');
+      throw new DatabaseException(
+        'Failed to retrieve payment link statistics',
+        'stats',
+      );
     }
   }
 }

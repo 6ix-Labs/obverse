@@ -8,7 +8,12 @@ export class DashboardSession {
   @Prop({ type: Types.ObjectId, ref: 'Merchant', required: true, index: true })
   merchantId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'PaymentLink', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'PaymentLink',
+    required: true,
+    index: true,
+  })
   paymentLinkId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -36,10 +41,15 @@ export class DashboardSession {
   updatedAt: Date;
 }
 
-export const DashboardSessionSchema = SchemaFactory.createForClass(DashboardSession);
+export const DashboardSessionSchema =
+  SchemaFactory.createForClass(DashboardSession);
 
 // TTL index - MongoDB will auto-delete expired sessions
 DashboardSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Compound index for faster queries
-DashboardSessionSchema.index({ merchantId: 1, paymentLinkId: 1, expiresAt: -1 });
+DashboardSessionSchema.index({
+  merchantId: 1,
+  paymentLinkId: 1,
+  expiresAt: -1,
+});

@@ -4,19 +4,19 @@ import { ModelNotFound } from '../../exceptions/model-not-found.exception';
 
 @Catch(ModelNotFound)
 export class ModelExceptionFilter implements ExceptionFilter {
-    catch(exception: ModelNotFound, host: ArgumentsHost) {
-        const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<Request>();
-        const status = exception.getStatus();
+  catch(exception: ModelNotFound, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
 
-        response.status(status).json({
-            success: 'false',
-            response_code: '004',
-            response_description: exception.message,
-            message: exception.message,
-        });
+    response.status(status).json({
+      success: 'false',
+      response_code: '004',
+      response_description: exception.message,
+      message: exception.message,
+    });
 
-        console.log(`An Error Occured in ${request.url}`, exception);
-    }
+    console.log(`An Error Occured in ${request.url}`, exception);
+  }
 }

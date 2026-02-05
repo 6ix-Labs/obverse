@@ -20,7 +20,10 @@ import { PaymentsModule } from 'src/payments/payments.module';
 import { TransactionsModule } from 'src/transactions/transactions.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { ConversationManager } from './conversation/conversation.manager';
-import { ConversationState, ConversationStateSchema } from './schemas/conversation-state.schema';
+import {
+  ConversationState,
+  ConversationStateSchema,
+} from './schemas/conversation-state.schema';
 import { ConversationRepository } from './conversation.repository';
 
 @Module({
@@ -31,8 +34,8 @@ import { ConversationRepository } from './conversation.repository';
     TransactionsModule,
     AuthModule,
     MongooseModule.forFeature([
-      { name: ConversationState.name, schema: ConversationStateSchema }
-    ])
+      { name: ConversationState.name, schema: ConversationStateSchema },
+    ]),
   ],
   providers: [
     TelegramService,
@@ -49,9 +52,9 @@ import { ConversationRepository } from './conversation.repository';
     SendHandler,
     DashboardHandler,
     ConversationManager,
-    ConversationRepository
+    ConversationRepository,
   ],
   controllers: [TelegramController],
-  exports: [ConversationRepository]
+  exports: [ConversationRepository],
 })
-export class TelegramModule { }
+export class TelegramModule {}

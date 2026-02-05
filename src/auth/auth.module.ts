@@ -6,7 +6,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { DashboardAuthService } from './dashboard-auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { DashboardSession, DashboardSessionSchema } from './schemas/dashboard-session.schema';
+import {
+  DashboardSession,
+  DashboardSessionSchema,
+} from './schemas/dashboard-session.schema';
 import { Merchant, MerchantSchema } from '../merchants/schema/merchant.schema';
 
 @Module({
@@ -19,7 +22,9 @@ import { Merchant, MerchantSchema } from '../merchants/schema/merchant.schema';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key-change-in-production',
+        secret:
+          configService.get<string>('JWT_SECRET') ||
+          'your-secret-key-change-in-production',
         signOptions: {
           expiresIn: '2h',
         },

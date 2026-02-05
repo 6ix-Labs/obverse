@@ -1,7 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Transaction, TransactionDocument, TransactionStatus, TransactionType } from './schemas/transaction.schema';
+import {
+  Transaction,
+  TransactionDocument,
+  TransactionStatus,
+  TransactionType,
+} from './schemas/transaction.schema';
 import { DatabaseException } from '../core/exceptions/database.exception';
 
 @Injectable()
@@ -11,7 +21,7 @@ export class TransactionsService {
   constructor(
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
-  ) { }
+  ) {}
 
   /**
    * Create a new transaction record
@@ -51,8 +61,12 @@ export class TransactionsService {
     const transaction = new this.transactionModel({
       ...data,
       merchantId: new Types.ObjectId(data.merchantId),
-      paymentId: data.paymentId ? new Types.ObjectId(data.paymentId) : undefined,
-      paymentLinkId: data.paymentLinkId ? new Types.ObjectId(data.paymentLinkId) : undefined,
+      paymentId: data.paymentId
+        ? new Types.ObjectId(data.paymentId)
+        : undefined,
+      paymentLinkId: data.paymentLinkId
+        ? new Types.ObjectId(data.paymentLinkId)
+        : undefined,
       status: TransactionStatus.PENDING,
     });
 
@@ -364,9 +378,12 @@ export class TransactionsService {
       result.totalVolume += stat.volume || 0;
       result.totalFees += stat.fees || 0;
 
-      if (stat._id === TransactionStatus.PENDING) result.pendingTransactions = stat.count;
-      if (stat._id === TransactionStatus.CONFIRMED) result.confirmedTransactions = stat.count;
-      if (stat._id === TransactionStatus.FAILED) result.failedTransactions = stat.count;
+      if (stat._id === TransactionStatus.PENDING)
+        result.pendingTransactions = stat.count;
+      if (stat._id === TransactionStatus.CONFIRMED)
+        result.confirmedTransactions = stat.count;
+      if (stat._id === TransactionStatus.FAILED)
+        result.failedTransactions = stat.count;
     });
 
     // Process type stats

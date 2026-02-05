@@ -10,10 +10,10 @@ import { WalletModule } from 'src/wallet/wallet.module';
     MongooseModule.forFeature([
       { name: Merchant.name, schema: MerchantSchema },
     ]),
-    WalletModule
+    WalletModule,
   ],
   providers: [MerchantService, MerchantRepository],
   controllers: [MerchantsController],
   exports: [MerchantService, MerchantRepository],
 })
-export class MerchantsModule { }
+export class MerchantsModule {}

@@ -4,13 +4,19 @@ import { Model, Types } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { customAlphabet } from 'nanoid';
-import { DashboardSession, DashboardSessionDocument } from './schemas/dashboard-session.schema';
-import { Merchant, MerchantDocument } from '../merchants/schema/merchant.schema';
+import {
+  DashboardSession,
+  DashboardSessionDocument,
+} from './schemas/dashboard-session.schema';
+import {
+  Merchant,
+  MerchantDocument,
+} from '../merchants/schema/merchant.schema';
 
 // Generate readable password: 12 chars, alphanumeric (excluding ambiguous chars)
 const generatePassword = customAlphabet(
   'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789',
-  12
+  12,
 );
 
 @Injectable()
@@ -52,10 +58,13 @@ export class DashboardAuthService {
       expiresAt,
     });
 
-    this.logger.log(`Generated temporary password for merchant ${merchantId}, payment link ${paymentLinkId}, expires at ${expiresAt}`);
+    this.logger.log(
+      `Generated temporary password for merchant ${merchantId}, payment link ${paymentLinkId}, expires at ${expiresAt}`,
+    );
 
     // Return credentials with merchant's Telegram username or ID
-    const identifier = merchant.username || merchant.telegramId || merchant._id.toString();
+    const identifier =
+      merchant.username || merchant.telegramId || merchant._id.toString();
 
     return {
       identifier: identifier.startsWith('@') ? identifier : `@${identifier}`,
@@ -72,34 +81,37 @@ export class DashboardAuthService {
     identifier: string,
     password: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ) {
     // Clean identifier (remove @ if present)
     const cleanIdentifier = identifier.replace('@', '').trim();
 
     // Find merchant by username or telegramId
     const merchant = await this.merchantModel.findOne({
-      $or: [
-        { username: cleanIdentifier },
-        { telegramId: cleanIdentifier },
-      ],
+      $or: [{ username: cleanIdentifier }, { telegramId: cleanIdentifier }],
     });
 
     if (!merchant) {
-      this.logger.warn(`Login attempt with invalid identifier: ${cleanIdentifier}`);
+      this.logger.warn(
+        `Login attempt with invalid identifier: ${cleanIdentifier}`,
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Find active, non-expired session for this merchant
-    const session = await this.dashboardSessionModel.findOne({
-      merchantId: merchant._id,
-      expiresAt: { $gt: new Date() },
-      isRevoked: false,
-    }).sort({ createdAt: -1 }); // Get most recent session
+    const session = await this.dashboardSessionModel
+      .findOne({
+        merchantId: merchant._id,
+        expiresAt: { $gt: new Date() },
+        isRevoked: false,
+      })
+      .sort({ createdAt: -1 }); // Get most recent session
 
     if (!session) {
       this.logger.warn(`No valid session found for merchant ${merchant._id}`);
-      throw new UnauthorizedException('No valid session. Generate new password from Telegram bot using /dashboard');
+      throw new UnauthorizedException(
+        'No valid session. Generate new password from Telegram bot using /dashboard',
+      );
     }
 
     // Verify password
@@ -116,7 +128,9 @@ export class DashboardAuthService {
     if (userAgent) session.userAgent = userAgent;
     await session.save();
 
-    this.logger.log(`Successful login for merchant ${merchant._id} for payment link ${session.paymentLinkId.toString()}`);
+    this.logger.log(
+      `Successful login for merchant ${merchant._id} for payment link ${session.paymentLinkId.toString()}`,
+    );
 
     // Generate JWT token (valid for 2 hours, same as password)
     const payload = {
@@ -154,12 +168,14 @@ export class DashboardAuthService {
       {
         merchantId,
         isRevoked: false,
-        expiresAt: { $gt: new Date() }
+        expiresAt: { $gt: new Date() },
       },
-      { isRevoked: true }
+      { isRevoked: true },
     );
 
-    this.logger.log(`Revoked ${result.modifiedCount} sessions for merchant ${merchantId}`);
+    this.logger.log(
+      `Revoked ${result.modifiedCount} sessions for merchant ${merchantId}`,
+    );
     return result.modifiedCount;
   }
 
@@ -183,10 +199,12 @@ export class DashboardAuthService {
    * For debugging/admin purposes
    */
   async getActiveSessions(merchantId: string) {
-    return this.dashboardSessionModel.find({
-      merchantId: new Types.ObjectId(merchantId),
-      expiresAt: { $gt: new Date() },
-      isRevoked: false,
-    }).sort({ createdAt: -1 });
+    return this.dashboardSessionModel
+      .find({
+        merchantId: new Types.ObjectId(merchantId),
+        expiresAt: { $gt: new Date() },
+        isRevoked: false,
+      })
+      .sort({ createdAt: -1 });
   }
 }

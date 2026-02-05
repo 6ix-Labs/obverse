@@ -17,6 +17,7 @@ export default registerAs(
     apiPublicKey: process.env.TURNKEY_API_PUBLIC_KEY || '',
     apiPrivateKey: process.env.TURNKEY_API_PRIVATE_KEY || '',
     defaultOrganizationId: process.env.TURNKEY_ORGANIZATION_ID || '',
-    solanaRpcUrl: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+    solanaRpcUrl:
+      process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
   }),
 );

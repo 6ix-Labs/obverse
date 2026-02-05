@@ -9,9 +9,7 @@ import { PaymentLinksModule } from 'src/payment-links/payment-links.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Payment.name, schema: PaymentSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
     TransactionsModule,
     PaymentLinksModule,
   ],
@@ -19,4 +17,4 @@ import { PaymentLinksModule } from 'src/payment-links/payment-links.module';
   controllers: [PaymentsController],
   exports: [PaymentsService, PaymentRepository],
 })
-export class PaymentsModule { }
+export class PaymentsModule {}
