@@ -86,16 +86,23 @@ export class DashboardService {
   }
 
   /**
-   * Get payments with pagination for the payment link
+   * Get payments with pagination and filters for the payment link
    */
   async getPayments(
     merchantId: string,
     paymentLinkId: string,
     limit: number = 50,
     skip: number = 0,
+    filters?: {
+      token?: string;
+      chain?: string;
+      startDate?: Date;
+      endDate?: Date;
+      search?: string;
+    },
   ) {
     this.logger.log(
-      `Getting payments for payment link ${paymentLinkId}, limit: ${limit}, skip: ${skip}`,
+      `Getting payments for payment link ${paymentLinkId}, limit: ${limit}, skip: ${skip}, filters: ${JSON.stringify(filters || {})}`,
     );
 
     // Verify ownership
@@ -104,18 +111,27 @@ export class DashboardService {
       throw new UnauthorizedException('Access denied');
     }
 
-    const allPayments = await this.paymentsService.findByPaymentLinkId(
+    // Fetch filtered payments from the database
+    const result = await this.paymentsService.findByPaymentLinkIdWithFilters(
       link._id.toString(),
-    );
-    const paginatedPayments = allPayments.slice(skip, skip + limit);
-
-    return {
-      payments: paginatedPayments,
-      pagination: {
-        total: allPayments.length,
+      {
         limit,
         skip,
-        hasMore: skip + paginatedPayments.length < allPayments.length,
+        token: filters?.token,
+        chain: filters?.chain,
+        startDate: filters?.startDate,
+        endDate: filters?.endDate,
+        search: filters?.search,
+      },
+    );
+
+    return {
+      payments: result.payments,
+      pagination: {
+        total: result.total,
+        limit,
+        skip,
+        hasMore: skip + result.payments.length < result.total,
       },
     };
   }

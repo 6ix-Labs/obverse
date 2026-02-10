@@ -44,14 +44,31 @@ export class TransactionsController {
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['merchantId', 'txSignature', 'chain', 'type', 'fromAddress', 'toAddress'],
+      required: [
+        'merchantId',
+        'txSignature',
+        'chain',
+        'type',
+        'fromAddress',
+        'toAddress',
+      ],
       properties: {
         merchantId: { type: 'string', example: '507f1f77bcf86cd799439011' },
         txSignature: { type: 'string', example: '5j7s...9k2m' },
         chain: { type: 'string', example: 'solana' },
-        type: { type: 'string', enum: ['payment', 'swap', 'transfer', 'withdrawal'], example: 'payment' },
-        fromAddress: { type: 'string', example: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU' },
-        toAddress: { type: 'string', example: '9yZXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU' },
+        type: {
+          type: 'string',
+          enum: ['payment', 'swap', 'transfer', 'withdrawal'],
+          example: 'payment',
+        },
+        fromAddress: {
+          type: 'string',
+          example: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+        },
+        toAddress: {
+          type: 'string',
+          example: '9yZXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+        },
         amount: { type: 'number', example: 50 },
         token: { type: 'string', example: 'USDC' },
       },
@@ -205,20 +222,61 @@ export class TransactionsController {
   @Get('merchant/:merchantId')
   @ApiOperation({
     summary: 'Get merchant transactions',
-    description: 'Retrieve all transactions for a specific merchant with optional filters',
+    description:
+      'Retrieve all transactions for a specific merchant with optional filters',
   })
   @ApiParam({
     name: 'merchantId',
     description: 'Merchant ID',
     example: '507f1f77bcf86cd799439011',
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of results to return (max 1000)', example: 50 })
-  @ApiQuery({ name: 'skip', required: false, type: Number, description: 'Number of results to skip', example: 0 })
-  @ApiQuery({ name: 'type', required: false, enum: ['payment', 'swap', 'transfer', 'withdrawal'], description: 'Transaction type filter' })
-  @ApiQuery({ name: 'chain', required: false, type: String, description: 'Blockchain chain filter', example: 'solana' })
-  @ApiQuery({ name: 'status', required: false, enum: ['pending', 'confirmed', 'failed'], description: 'Transaction status filter' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date filter (ISO 8601)', example: '2024-01-01T00:00:00.000Z' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date filter (ISO 8601)', example: '2024-12-31T23:59:59.999Z' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of results to return (max 1000)',
+    example: 50,
+  })
+  @ApiQuery({
+    name: 'skip',
+    required: false,
+    type: Number,
+    description: 'Number of results to skip',
+    example: 0,
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['payment', 'swap', 'transfer', 'withdrawal'],
+    description: 'Transaction type filter',
+  })
+  @ApiQuery({
+    name: 'chain',
+    required: false,
+    type: String,
+    description: 'Blockchain chain filter',
+    example: 'solana',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['pending', 'confirmed', 'failed'],
+    description: 'Transaction status filter',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date filter (ISO 8601)',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date filter (ISO 8601)',
+    example: '2024-12-31T23:59:59.999Z',
+  })
   @ApiResponse({
     status: 200,
     description: 'Transactions retrieved successfully',
@@ -285,17 +343,38 @@ export class TransactionsController {
   @Get('merchant/:merchantId/stats')
   @ApiOperation({
     summary: 'Get merchant transaction statistics',
-    description: 'Retrieve aggregated statistics for a merchant\'s transactions',
+    description: "Retrieve aggregated statistics for a merchant's transactions",
   })
   @ApiParam({
     name: 'merchantId',
     description: 'Merchant ID',
     example: '507f1f77bcf86cd799439011',
   })
-  @ApiQuery({ name: 'type', required: false, enum: ['payment', 'swap', 'transfer', 'withdrawal'], description: 'Filter by transaction type' })
-  @ApiQuery({ name: 'chain', required: false, type: String, description: 'Filter by blockchain chain', example: 'solana' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date filter (ISO 8601)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date filter (ISO 8601)' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['payment', 'swap', 'transfer', 'withdrawal'],
+    description: 'Filter by transaction type',
+  })
+  @ApiQuery({
+    name: 'chain',
+    required: false,
+    type: String,
+    description: 'Filter by blockchain chain',
+    example: 'solana',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date filter (ISO 8601)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date filter (ISO 8601)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Statistics retrieved successfully',
@@ -408,7 +487,8 @@ export class TransactionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Confirm a transaction',
-    description: 'Mark a transaction as confirmed with the specified number of confirmations',
+    description:
+      'Mark a transaction as confirmed with the specified number of confirmations',
   })
   @ApiParam({
     name: 'txSignature',
@@ -422,7 +502,11 @@ export class TransactionsController {
       properties: {
         confirmations: { type: 'number', example: 32 },
         chain: { type: 'string', example: 'solana' },
-        blockTime: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00.000Z' },
+        blockTime: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-01-15T10:30:00.000Z',
+        },
       },
     },
   })

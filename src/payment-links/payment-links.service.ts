@@ -50,7 +50,10 @@ export class PaymentLinksService {
 
       // Validate minimum amount based on token type
       const stablecoins = ['USDC', 'USDT', 'BUSD', 'DAI', 'TUSD'];
-      if (stablecoins.includes(data.token.toUpperCase()) && data.amount < 0.005) {
+      if (
+        stablecoins.includes(data.token.toUpperCase()) &&
+        data.amount < 0.005
+      ) {
         throw new BadRequestException(
           `Minimum amount for ${data.token} is 0.005`,
         );

@@ -12,6 +12,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBody,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { DashboardAuthService } from './dashboard-auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -29,6 +30,15 @@ export class AuthController {
       'Authenticate user with Telegram username or ID and temporary password to access payment link dashboard',
   })
   @ApiBody({ type: LoginDto })
+  @ApiHeader({
+    name: 'user-agent',
+    required: false,
+    description: 'Browser/device identifier for session tracking (optional)',
+    schema: {
+      type: 'string',
+      example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0',
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Successfully authenticated. Returns JWT token and user info.',
@@ -52,7 +62,7 @@ export class AuthController {
   async login(
     @Body() loginDto: LoginDto,
     @Ip() ip: string,
-    @Headers('user-agent') userAgent: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
     return this.authService.validateCredentials(
       loginDto.identifier,

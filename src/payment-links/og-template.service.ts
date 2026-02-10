@@ -7,8 +7,7 @@ export class OGTemplateService {
     const { linkId, amount, token, description, chain } = paymentLink;
 
     const title = `Payment Request: ${amount} ${token}`;
-    const pageDescription =
-      description || `Pay ${amount} ${token} on ${chain}`;
+    const pageDescription = description || `Pay ${amount} ${token} on ${chain}`;
     const imageUrl = `${baseUrl}/payment-links/${linkId}/og-image`;
     const pageUrl = `${baseUrl}/payment-links/${linkId}`;
 

@@ -1,0 +1,118 @@
+# COPY-PASTE READY POSTMAN TESTS
+# Replace YOUR_ACCESS_TOKEN with your actual JWT token
+
+# 1. Baseline - No Filters
+GET http://localhost:3000/dashboard/payments
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 2. Filter by Token (USDC)
+GET http://localhost:3000/dashboard/payments?token=USDC
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 3. Filter by Token (SOL)
+GET http://localhost:3000/dashboard/payments?token=SOL
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 4. Filter by Chain (Solana)
+GET http://localhost:3000/dashboard/payments?chain=solana
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 5. Filter by Chain (Ethereum)
+GET http://localhost:3000/dashboard/payments?chain=ethereum
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 6. Date Range - Last 7 days (update dates to current)
+GET http://localhost:3000/dashboard/payments?startDate=2024-02-03T00:00:00.000Z&endDate=2024-02-10T23:59:59.999Z
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 7. Combined - USDC on Solana
+GET http://localhost:3000/dashboard/payments?token=USDC&chain=solana
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 8. Combined - All filters + pagination
+GET http://localhost:3000/dashboard/payments?token=USDC&chain=solana&startDate=2024-01-01T00:00:00.000Z&endDate=2024-12-31T23:59:59.999Z&limit=20&skip=0
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 9. Pagination - Page 1 (first 10)
+GET http://localhost:3000/dashboard/payments?limit=10&skip=0
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 10. Pagination - Page 2 (next 10)
+GET http://localhost:3000/dashboard/payments?limit=10&skip=10
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# === VALIDATION TESTS (Should return 400 errors) ===
+
+# 11. Invalid Limit (too high)
+GET http://localhost:3000/dashboard/payments?limit=5000
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Expected: 400 - "Limit must be between 0 and 1000"
+
+# 12. Invalid Limit (negative)
+GET http://localhost:3000/dashboard/payments?limit=-10
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Expected: 400 - "Limit must be between 0 and 1000"
+
+# 13. Invalid Skip (negative)
+GET http://localhost:3000/dashboard/payments?skip=-5
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Expected: 400 - "Skip must be greater than or equal to 0"
+
+# 14. Invalid Date Format
+GET http://localhost:3000/dashboard/payments?startDate=invalid-date
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Expected: 400 - "Invalid start date format"
+
+# 15. Start Date After End Date
+GET http://localhost:3000/dashboard/payments?startDate=2024-12-31T00:00:00.000Z&endDate=2024-01-01T00:00:00.000Z
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Expected: 400 - "Start date must be before end date"
+
+# === SEARCH FUNCTIONALITY TESTS ===
+
+# 16. Search by Transaction Signature
+GET http://localhost:3000/dashboard/payments?search=5KJH
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 17. Search by Wallet Address
+GET http://localhost:3000/dashboard/payments?search=0xABC
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 18. Search by Customer Name
+GET http://localhost:3000/dashboard/payments?search=john
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 19. Search by Email
+GET http://localhost:3000/dashboard/payments?search=alice@example.com
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 20. Search by Amount (exact match)
+GET http://localhost:3000/dashboard/payments?search=100
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 21. Search + Token Filter
+GET http://localhost:3000/dashboard/payments?token=USDC&search=john
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 22. Search + Chain Filter
+GET http://localhost:3000/dashboard/payments?chain=solana&search=ABC123
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 23. Search + Date Range
+GET http://localhost:3000/dashboard/payments?startDate=2024-01-01T00:00:00.000Z&endDate=2024-12-31T23:59:59.999Z&search=alice
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 24. Search + All Filters Combined
+GET http://localhost:3000/dashboard/payments?token=USDC&chain=solana&search=john&limit=10
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# 25. Search with Pagination
+GET http://localhost:3000/dashboard/payments?search=test&limit=5&skip=0
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+# === PRODUCTION URL (if deployed) ===
+# Replace localhost:3000 with your production URL
+
+# Example:
+# GET https://api.yourdomain.com/dashboard/payments?token=USDC
+# Authorization: Bearer YOUR_ACCESS_TOKEN

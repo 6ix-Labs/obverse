@@ -91,7 +91,8 @@ export class PaymentLinksController {
         await this.paymentLinksService.findByLinkIdWithMerchant(linkCode);
 
       // Generate the OG image
-      const imageBuffer = await this.ogImageService.generateOGImage(paymentLink);
+      const imageBuffer =
+        await this.ogImageService.generateOGImage(paymentLink);
 
       this.logger.log(`OG image generated for: ${linkCode}`);
 
@@ -132,7 +133,8 @@ export class PaymentLinksController {
   @ApiProduces('application/json', 'text/html')
   @ApiResponse({
     status: 200,
-    description: 'Payment link details retrieved successfully (JSON for API clients, HTML with OG tags for bots/browsers)',
+    description:
+      'Payment link details retrieved successfully (JSON for API clients, HTML with OG tags for bots/browsers)',
     type: PaymentLinkResponseDto,
   })
   @ApiResponse({
@@ -174,8 +176,7 @@ export class PaymentLinksController {
       const acceptHeader = req.headers['accept']?.toLowerCase() || '';
 
       const isBotOrBrowser =
-        this.isSocialMediaBot(userAgent) ||
-        acceptHeader.includes('text/html');
+        this.isSocialMediaBot(userAgent) || acceptHeader.includes('text/html');
 
       // If it's a bot or browser requesting HTML, return HTML with OG tags
       if (isBotOrBrowser && !acceptHeader.includes('application/json')) {
