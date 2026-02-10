@@ -240,6 +240,114 @@ export class PaymentsService {
       .sort({ createdAt: -1 });
   }
 
+  /**
+   * Find payments by payment link ID with filters and pagination
+   * Returns both the filtered payments and total count
+   */
+  async findByPaymentLinkIdWithFilters(
+    paymentLinkId: string,
+    options?: {
+      limit?: number;
+      skip?: number;
+      token?: string;
+      chain?: string;
+      startDate?: Date;
+      endDate?: Date;
+      search?: string;
+    },
+  ): Promise<{ payments: PaymentDocument[]; total: number }> {
+    try {
+      // Build the query object
+      const query: any = { paymentLinkId: paymentLinkId };
+
+      // Apply optional filters
+      if (options?.token) {
+        query.token = options.token;
+      }
+
+      if (options?.chain) {
+        query.chain = options.chain;
+      }
+
+      // Apply date range filters
+      if (options?.startDate || options?.endDate) {
+        query.createdAt = {};
+        if (options.startDate) {
+          query.createdAt.$gte = options.startDate;
+        }
+        if (options.endDate) {
+          query.createdAt.$lte = options.endDate;
+        }
+      }
+
+      // Apply search filter across multiple fields
+      if (options?.search) {
+        const searchTerm = options.search.trim();
+
+        // Try to parse as number for amount search
+        const numericSearch = parseFloat(searchTerm);
+
+        query.$or = [
+          // Search in transaction signature (partial, case-insensitive)
+          { txSignature: { $regex: searchTerm, $options: 'i' } },
+          // Search in fromAddress (partial, case-insensitive)
+          { fromAddress: { $regex: searchTerm, $options: 'i' } },
+          // Search in toAddress (partial, case-insensitive)
+          { toAddress: { $regex: searchTerm, $options: 'i' } },
+        ];
+
+        // Add amount search if the search term is a valid number
+        if (!isNaN(numericSearch)) {
+          query.$or.push({ amount: numericSearch });
+        }
+
+        // Search in customer data fields (if they exist)
+        // Note: This searches for the search term in any customer data value
+        query.$or.push({
+          $expr: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: { $objectToArray: '$customerData' },
+                    as: 'item',
+                    cond: {
+                      $regexMatch: {
+                        input: { $toString: '$$item.v' },
+                        regex: searchTerm,
+                        options: 'i',
+                      },
+                    },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+        });
+      }
+
+      // Execute query with pagination and get total count
+      const [payments, total] = await Promise.all([
+        this.paymentModel
+          .find(query)
+          .sort({ createdAt: -1 })
+          .limit(options?.limit || 50)
+          .skip(options?.skip || 0)
+          .exec(),
+        this.paymentModel.countDocuments(query),
+      ]);
+
+      return { payments, total };
+    } catch (error) {
+      this.logger.error(
+        `Error finding payments for payment link ${paymentLinkId} with filters: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
   async findByMerchantId(
     merchantId: string,
     limit = 100,

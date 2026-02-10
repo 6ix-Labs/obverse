@@ -40,7 +40,8 @@ export class SignSolanaTransactionDto {
 
   @ApiProperty({
     description: 'Base64 encoded serialized transaction',
-    example: 'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDoQ...',
+    example:
+      'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDoQ...',
   })
   @IsString()
   @IsNotEmpty()
@@ -58,7 +59,8 @@ export class SignAndSendSolanaTransactionDto {
 
   @ApiProperty({
     description: 'Base64 encoded serialized transaction',
-    example: 'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDoQ...',
+    example:
+      'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDoQ...',
   })
   @IsString()
   @IsNotEmpty()
@@ -118,7 +120,8 @@ export class WalletResponseDto {
 export class SignedTransactionResponseDto {
   @ApiProperty({
     description: 'Signed transaction (base64 encoded)',
-    example: 'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDoQ...',
+    example:
+      'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDoQ...',
   })
   signedTransaction: string;
 }

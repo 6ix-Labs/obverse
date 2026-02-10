@@ -64,7 +64,8 @@ export class PaymentsController {
   })
   @ApiResponse({
     status: 409,
-    description: 'Conflict - payment with this transaction signature already exists',
+    description:
+      'Conflict - payment with this transaction signature already exists',
   })
   async createPayment(
     @Body() createPaymentDto: CreatePaymentDto,
@@ -103,7 +104,8 @@ export class PaymentsController {
   @Get('link/:linkCode')
   @ApiOperation({
     summary: 'Get payments by link code',
-    description: 'Retrieve all payments associated with a specific payment link code',
+    description:
+      'Retrieve all payments associated with a specific payment link code',
   })
   @ApiParam({
     name: 'linkCode',
