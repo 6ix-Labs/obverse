@@ -79,7 +79,15 @@ export class PaymentsController {
         await this.paymentsService.createPaymentFromFrontend(createPaymentDto);
 
       this.logger.log(`Payment created successfully: ${payment._id}`);
-      return payment;
+      const paymentObject =
+        typeof (payment as any).toObject === 'function'
+          ? (payment as any).toObject()
+          : payment;
+
+      return {
+        ...paymentObject,
+        isConfirmed: payment.status === 'confirmed',
+      } as PaymentDocument;
     } catch (error) {
       this.logger.error(
         `Error creating payment: ${error.message}`,

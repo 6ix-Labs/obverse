@@ -13,6 +13,7 @@ import {
   PaymentLinkDocument,
 } from './schemas/payment-links.schema';
 import { DatabaseException } from '../core/exceptions/database.exception';
+import { ChainValidator } from '../blockchain/validators/chain.validator';
 
 @Injectable()
 export class PaymentLinksService {
@@ -40,24 +41,15 @@ export class PaymentLinksService {
         throw new BadRequestException('Merchant ID is required');
       }
 
-      if (!data.amount || data.amount <= 0) {
-        throw new BadRequestException('Amount must be greater than 0');
-      }
+      // Default to Solana for backward compatibility
+      const chain = data.chain || 'solana';
 
-      if (!data.token || data.token.trim().length === 0) {
-        throw new BadRequestException('Token is required');
-      }
-
-      // Validate minimum amount based on token type
-      const stablecoins = ['USDC', 'USDT', 'BUSD', 'DAI', 'TUSD'];
-      if (
-        stablecoins.includes(data.token.toUpperCase()) &&
-        data.amount < 0.005
-      ) {
-        throw new BadRequestException(
-          `Minimum amount for ${data.token} is 0.005`,
-        );
-      }
+      // Validate chain, token, and amount using ChainValidator
+      ChainValidator.validatePaymentLinkData({
+        chain,
+        token: data.token,
+        amount: data.amount,
+      });
 
       if (data.expiresAt && data.expiresAt < new Date()) {
         throw new BadRequestException('Expiration date must be in the future');
@@ -69,7 +61,7 @@ export class PaymentLinksService {
         ...data,
         merchantId: new Types.ObjectId(data.merchantId),
         linkId,
-        chain: data.chain || 'solana', // Default to Solana for backward compatibility
+        chain,
       });
 
       this.logger.log(

@@ -12,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WalletModule } from './wallet/wallet.module';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 import configuration from './config/configuration';
 import leanVirtuals from 'mongoose-lean-virtuals';
 
@@ -48,6 +49,7 @@ const config = configuration();
     WalletModule,
     AuthModule,
     DashboardModule,
+    ApiKeysModule,
   ],
   controllers: [AppController],
   providers: [AppService],

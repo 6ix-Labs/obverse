@@ -48,21 +48,32 @@ export class MerchantService {
     const walletDoc = await this.walletService.getWalletDocument(telegramId);
 
     // Create merchant linked to wallet
+    const wallets = [
+      {
+        address: walletResponse.solanaAddress,
+        chain: 'solana',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      },
+    ];
+
+    if (walletResponse.ethereumAddress) {
+      wallets.push({
+        address: walletResponse.ethereumAddress,
+        chain: 'monad',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      });
+    }
+
     const merchant = new this.merchantModel({
       telegramId,
       username,
       firstName,
       lastName,
-      turnkeyWallet: walletDoc?.id,
+      turnkeyWalletId: walletDoc?.id,
       walletAddress: walletResponse.solanaAddress, // Set deprecated field for backward compatibility
-      wallets: [
-        {
-          address: walletResponse.solanaAddress,
-          chain: 'solana',
-          isActive: true,
-          label: 'Turnkey Wallet',
-        },
-      ],
+      wallets,
     });
 
     await merchant.save();
@@ -81,7 +92,13 @@ export class MerchantService {
    * Find merchant by telegramId
    */
   async findByTelegramId(telegramId: string): Promise<MerchantDocument | null> {
-    return this.merchantModel.findOne({ telegramId }).exec();
+    const merchant = await this.merchantModel.findOne({ telegramId }).exec();
+    if (!merchant) {
+      return null;
+    }
+
+    await this.syncMerchantWalletsWithTurnkeyWallet(merchant, telegramId);
+    return merchant;
   }
 
   async findById(
@@ -147,7 +164,7 @@ export class MerchantService {
   async getMerchantByTelegramId(
     telegramId: string,
   ): Promise<MerchantDocument | null> {
-    return this.merchantModel.findOne({ telegramId }).exec();
+    return this.findByTelegramId(telegramId);
   }
 
   /**
@@ -156,7 +173,7 @@ export class MerchantService {
   async getMerchantWithWallet(telegramId: string) {
     const merchant = await this.merchantModel
       .findOne({ telegramId })
-      .populate('turnkeyWallet')
+      .populate('turnkeyWalletId')
       .exec();
 
     if (!merchant) {
@@ -280,15 +297,15 @@ export class MerchantService {
    * Update merchant's wallet address (for external wallets)
    */
   async updateWallet(
-    telegramId: string,
+    merchantIdentifier: string,
     walletAddress: string,
     chain: string = 'solana',
     label?: string,
   ): Promise<MerchantDocument> {
-    const merchant = await this.merchantModel.findOne({ telegramId }).exec();
+    const merchant = await this.findMerchantByIdentifier(merchantIdentifier);
 
     if (!merchant) {
-      throw new NotFoundException(`Merchant not found: ${telegramId}`);
+      throw new NotFoundException(`Merchant not found: ${merchantIdentifier}`);
     }
 
     // Update the main wallet address (backward compatibility)
@@ -317,7 +334,7 @@ export class MerchantService {
     await merchant.save();
 
     this.logger.log(
-      `Updated wallet for merchant ${telegramId}: ${walletAddress}`,
+      `Updated wallet for merchant ${merchant.telegramId || merchant._id?.toString()}: ${walletAddress}`,
     );
 
     return merchant;
@@ -373,6 +390,91 @@ export class MerchantService {
   }
 
   /**
+   * Upgrade existing wallet to support EVM chains (Monad, Ethereum)
+   * For users who created wallets before EVM support was added
+   */
+  async upgradeWalletForEvm(telegramId: string): Promise<{
+    merchant: MerchantDocument;
+    wallet: any;
+    wasUpgraded: boolean;
+  }> {
+    const merchant = await this.merchantModel.findOne({ telegramId }).exec();
+    if (!merchant) {
+      throw new NotFoundException(`Merchant not found: ${telegramId}`);
+    }
+
+    // Check if already has EVM support
+    const existingWallet =
+      await this.walletService.getWalletDocument(telegramId);
+    if (existingWallet?.ethereumAddress) {
+      this.logger.log(`Merchant ${telegramId} already has EVM support`);
+      const walletResponse =
+        await this.walletService.getWalletByUserId(telegramId);
+      await this.syncMerchantWalletsWithWalletResponse(
+        merchant,
+        walletResponse,
+      );
+      return {
+        merchant,
+        wallet: walletResponse,
+        wasUpgraded: false,
+      };
+    }
+
+    try {
+      // Best-effort backfill of EVM address for old wallets
+      const upgradedWallet =
+        await this.walletService.backfillEvmAddress(telegramId);
+
+      // Ensure EVM address exists
+      if (!upgradedWallet || !upgradedWallet.ethereumAddress) {
+        this.logger.warn(
+          `No EVM address available for merchant ${telegramId}; wallet remains Solana-only`,
+        );
+        return {
+          merchant,
+          wallet: upgradedWallet,
+          wasUpgraded: false,
+        };
+      }
+
+      await this.syncMerchantWalletsWithWalletResponse(
+        merchant,
+        upgradedWallet,
+      );
+
+      this.logger.log(
+        `Upgraded wallet for merchant ${telegramId} with EVM support: ${upgradedWallet.ethereumAddress}`,
+      );
+
+      return {
+        merchant,
+        wallet: upgradedWallet,
+        wasUpgraded: true,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to upgrade wallet for merchant ${telegramId}: ${error.message}`,
+        error.stack,
+      );
+      throw new Error('Failed to upgrade wallet for EVM support');
+    }
+  }
+
+  /**
+   * Check if merchant needs wallet upgrade for EVM support
+   */
+  async needsWalletUpgrade(telegramId: string): Promise<boolean> {
+    try {
+      const wallet = await this.walletService.getWalletDocument(telegramId);
+      return !wallet?.ethereumAddress;
+    } catch (error) {
+      // If wallet doesn't exist, they need full setup, not just upgrade
+      return false;
+    }
+  }
+
+  /**
    * Check if merchant exists
    */
   async exists(telegramId: string): Promise<boolean> {
@@ -391,5 +493,89 @@ export class MerchantService {
       .limit(limit)
       .skip(skip)
       .exec();
+  }
+
+  private async findMerchantByIdentifier(
+    merchantIdentifier: string,
+  ): Promise<MerchantDocument | null> {
+    const byTelegramId = await this.merchantModel
+      .findOne({ telegramId: merchantIdentifier })
+      .exec();
+    if (byTelegramId) {
+      return byTelegramId;
+    }
+
+    if (Types.ObjectId.isValid(merchantIdentifier)) {
+      return this.merchantModel.findById(merchantIdentifier).exec();
+    }
+
+    return null;
+  }
+
+  private async syncMerchantWalletsWithTurnkeyWallet(
+    merchant: MerchantDocument,
+    telegramId: string,
+  ): Promise<void> {
+    try {
+      const wallet = await this.walletService.getWalletByUserId(telegramId);
+      await this.syncMerchantWalletsWithWalletResponse(merchant, wallet);
+    } catch (error) {
+      // Keep merchant lookup resilient even if wallet sync fails.
+      this.logger.warn(
+        `Failed wallet sync for merchant ${telegramId}: ${error.message}`,
+      );
+    }
+  }
+
+  private async syncMerchantWalletsWithWalletResponse(
+    merchant: MerchantDocument,
+    wallet: {
+      solanaAddress: string;
+      ethereumAddress?: string;
+    } | null,
+  ): Promise<void> {
+    if (!wallet) {
+      return;
+    }
+
+    let changed = false;
+    merchant.wallets = merchant.wallets || [];
+
+    const ensureWallet = (chain: string, address: string) => {
+      const existingByChain = merchant.wallets.find(
+        (entry) => entry.chain === chain,
+      );
+
+      if (!existingByChain) {
+        merchant.wallets.push({
+          chain,
+          address,
+          isActive: true,
+          label: 'Turnkey Wallet',
+        });
+        changed = true;
+        return;
+      }
+
+      if (existingByChain.address !== address) {
+        existingByChain.address = address;
+        existingByChain.isActive = true;
+        if (!existingByChain.label) {
+          existingByChain.label = 'Turnkey Wallet';
+        }
+        changed = true;
+      }
+    };
+
+    ensureWallet('solana', wallet.solanaAddress);
+    merchant.walletAddress = wallet.solanaAddress;
+
+    if (wallet.ethereumAddress) {
+      ensureWallet('monad', wallet.ethereumAddress);
+    }
+
+    if (changed) {
+      await merchant.save();
+    }
   }
 }

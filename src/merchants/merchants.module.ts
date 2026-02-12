@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MerchantService } from './merchants.service';
 import { MerchantsController } from './merchants.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -10,7 +10,7 @@ import { WalletModule } from 'src/wallet/wallet.module';
     MongooseModule.forFeature([
       { name: Merchant.name, schema: MerchantSchema },
     ]),
-    WalletModule,
+    forwardRef(() => WalletModule),
   ],
   providers: [MerchantService, MerchantRepository],
   controllers: [MerchantsController],

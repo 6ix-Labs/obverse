@@ -16,7 +16,6 @@ import type { IWalletRepository } from '../interfaces/wallet-repository.interfac
 import {
   Transaction,
   TransactionDocument,
-  TransactionType,
 } from '../../transactions/schemas/transaction.schema';
 import {
   BalanceResponseDto,
@@ -24,6 +23,8 @@ import {
   TransactionSummary,
 } from '../dto/wallet.dto';
 import turnkeyConfig from '../config/turnkey.config';
+import { EvmService } from '../../blockchain/services/evm.service';
+import { isChainSupported } from '../../blockchain/config/chains.config';
 
 @Injectable()
 export class BalanceService {
@@ -37,6 +38,7 @@ export class BalanceService {
     private transactionModel: Model<TransactionDocument>,
     @Inject(turnkeyConfig.KEY)
     private readonly config: ConfigType<typeof turnkeyConfig>,
+    private readonly evmService: EvmService,
   ) {
     // Initialize Solana connection
     this.solanaConnection = new Connection(
@@ -59,10 +61,10 @@ export class BalanceService {
         throw new BadRequestException('User ID is required');
       }
 
-      // Only support Solana for now
-      if (chain !== 'solana') {
+      // Validate chain is supported
+      if (!isChainSupported(chain)) {
         throw new BadRequestException(
-          'Only Solana chain is currently supported',
+          `Unsupported chain: ${chain}. Supported chains: solana, monad`,
         );
       }
 
@@ -73,18 +75,32 @@ export class BalanceService {
       }
 
       this.logger.log(
-        `Fetching balance for user ${odaUserId}, wallet: ${wallet.solanaAddress}`,
+        `Fetching balance for user ${odaUserId}, chain: ${chain}`,
       );
+
+      // Get wallet address based on chain
+      let walletAddress: string;
+      if (chain === 'solana') {
+        walletAddress = wallet.solanaAddress;
+      } else {
+        // For EVM chains (monad, ethereum, base, etc.) - all use the same Ethereum address
+        if (!wallet.ethereumAddress) {
+          throw new BadRequestException(
+            `No EVM address found for user ${odaUserId}. Run /start once to sync or upgrade your wallet for EVM chains.`,
+          );
+        }
+        walletAddress = wallet.ethereumAddress;
+      }
 
       // Fetch on-chain balance and transaction summary in parallel
       const [onChainData, transactionSummary] = await Promise.all([
-        this.getOnChainBalance(wallet.solanaAddress),
+        this.getOnChainBalance(walletAddress, chain),
         this.getTransactionSummary(odaUserId, chain),
       ]);
 
       return {
         odaUserId,
-        walletAddress: wallet.solanaAddress,
+        walletAddress,
         chain,
         nativeBalance: onChainData.nativeBalance,
         nativeBalanceUI: onChainData.nativeBalanceUI,
@@ -109,64 +125,107 @@ export class BalanceService {
   }
 
   /**
-   * Get on-chain balance from Solana blockchain
+   * Get on-chain balance from blockchain (supports Solana and EVM chains)
    */
-  private async getOnChainBalance(walletAddress: string): Promise<{
+  private async getOnChainBalance(
+    walletAddress: string,
+    chain: string,
+  ): Promise<{
     nativeBalance: number;
     nativeBalanceUI: string;
     tokens: TokenBalance[];
   }> {
     try {
-      const publicKey = new PublicKey(walletAddress);
-
-      // Get SOL balance
-      const balance = await this.solanaConnection.getBalance(publicKey);
-
-      // Get token accounts (SPL tokens like USDC, USDT)
-      const tokenAccounts =
-        await this.solanaConnection.getParsedTokenAccountsByOwner(
-          publicKey,
-          {
-            programId: new PublicKey(
-              'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-            ),
-          }, // SPL Token Program
-        );
-
-      const tokens: TokenBalance[] = tokenAccounts.value
-        .filter((account) => {
-          const tokenAmount = account.account.data.parsed.info.tokenAmount;
-          return tokenAmount.uiAmount > 0; // Only include tokens with balance
-        })
-        .map((account) => {
-          const parsedInfo = account.account.data.parsed.info;
-          const tokenAmount = parsedInfo.tokenAmount;
-
-          // Map common token mints to symbols
-          const mint = parsedInfo.mint;
-          const symbol = this.getTokenSymbol(mint);
-
-          return {
-            symbol,
-            mint,
-            balance: Number(tokenAmount.amount),
-            decimals: tokenAmount.decimals,
-            uiAmount: tokenAmount.uiAmountString,
-          };
-        });
-
-      return {
-        nativeBalance: balance,
-        nativeBalanceUI: (balance / LAMPORTS_PER_SOL).toFixed(9),
-        tokens,
-      };
+      if (chain === 'solana') {
+        return this.getSolanaBalance(walletAddress);
+      } else {
+        // EVM chains (monad, etc.)
+        return this.getEvmBalance(walletAddress, chain);
+      }
     } catch (error) {
       this.logger.error(
-        `Error fetching on-chain balance for ${walletAddress}: ${error.message}`,
+        `Error fetching on-chain balance for ${walletAddress} on ${chain}: ${error.message}`,
         error.stack,
       );
       throw new Error('Failed to fetch on-chain balance');
     }
+  }
+
+  /**
+   * Get Solana on-chain balance
+   */
+  private async getSolanaBalance(walletAddress: string): Promise<{
+    nativeBalance: number;
+    nativeBalanceUI: string;
+    tokens: TokenBalance[];
+  }> {
+    const publicKey = new PublicKey(walletAddress);
+
+    // Get SOL balance
+    const balance = await this.solanaConnection.getBalance(publicKey);
+
+    // Get token accounts (SPL tokens like USDC, USDT)
+    const tokenAccounts =
+      await this.solanaConnection.getParsedTokenAccountsByOwner(publicKey, {
+        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+      }); // SPL Token Program
+
+    const tokens: TokenBalance[] = tokenAccounts.value
+      .filter((account) => {
+        const tokenAmount = account.account.data.parsed.info.tokenAmount;
+        return tokenAmount.uiAmount > 0; // Only include tokens with balance
+      })
+      .map((account) => {
+        const parsedInfo = account.account.data.parsed.info;
+        const tokenAmount = parsedInfo.tokenAmount;
+
+        // Map common token mints to symbols
+        const mint = parsedInfo.mint;
+        const symbol = this.getTokenSymbol(mint);
+
+        return {
+          symbol,
+          mint,
+          balance: Number(tokenAmount.amount),
+          decimals: tokenAmount.decimals,
+          uiAmount: tokenAmount.uiAmountString,
+        };
+      });
+
+    return {
+      nativeBalance: balance,
+      nativeBalanceUI: (balance / LAMPORTS_PER_SOL).toFixed(9),
+      tokens,
+    };
+  }
+
+  /**
+   * Get EVM chain balance (Monad, Ethereum, etc.)
+   */
+  private async getEvmBalance(
+    walletAddress: string,
+    chain: string,
+  ): Promise<{
+    nativeBalance: number;
+    nativeBalanceUI: string;
+    tokens: TokenBalance[];
+  }> {
+    const evmBalance = await this.evmService.getBalance(chain, walletAddress);
+
+    // Convert to format expected by BalanceResponseDto
+    const tokens: TokenBalance[] = evmBalance.tokens.map((token) => ({
+      symbol: token.symbol,
+      mint: token.address || '',
+      balance: Number(token.balance),
+      decimals: token.decimals,
+      uiAmount: token.balanceFormatted,
+    }));
+
+    return {
+      nativeBalance: Number(evmBalance.nativeBalance),
+      nativeBalanceUI: evmBalance.nativeBalanceFormatted,
+      tokens,
+    };
   }
 
   /**
@@ -189,12 +248,38 @@ export class BalanceService {
         };
       }
 
-      // Query transactions by wallet address instead of merchantId
+      // Pick the wallet address based on selected chain.
+      // Solana uses solanaAddress; EVM chains (Monad, etc.) use ethereumAddress.
+      const walletAddress =
+        chain.toLowerCase() === 'solana'
+          ? wallet.solanaAddress
+          : wallet.ethereumAddress;
+
+      if (!walletAddress) {
+        return {
+          totalReceived: 0,
+          totalSent: 0,
+          netBalance: 0,
+          transactionCount: 0,
+          byType: {},
+        };
+      }
+
+      const normalizedWalletAddress =
+        chain.toLowerCase() === 'solana'
+          ? walletAddress
+          : walletAddress.toLowerCase();
+
+      // Query transactions by chain-specific wallet address instead of merchantId
       // Since we need to track all incoming/outgoing from this specific wallet
       const transactions = await this.transactionModel.find({
         $or: [
-          { fromAddress: wallet.solanaAddress },
-          { toAddress: wallet.solanaAddress },
+          { fromAddress: walletAddress },
+          { toAddress: walletAddress },
+          // EVM addresses can have mixed casing depending on source.
+          // Keep fallback matches for normalized lowercase values.
+          { fromAddress: normalizedWalletAddress },
+          { toAddress: normalizedWalletAddress },
         ],
         chain,
         status: 'confirmed', // Only count confirmed transactions
@@ -212,11 +297,20 @@ export class BalanceService {
         byType[tx.type].count++;
         byType[tx.type].volume += tx.amount;
 
+        const txTo =
+          chain.toLowerCase() === 'solana'
+            ? tx.toAddress
+            : tx.toAddress.toLowerCase();
+        const txFrom =
+          chain.toLowerCase() === 'solana'
+            ? tx.fromAddress
+            : tx.fromAddress.toLowerCase();
+
         // Calculate received vs sent
-        if (tx.toAddress === wallet.solanaAddress) {
+        if (txTo === normalizedWalletAddress) {
           totalReceived += tx.amount;
         }
-        if (tx.fromAddress === wallet.solanaAddress) {
+        if (txFrom === normalizedWalletAddress) {
           totalSent += tx.amount;
         }
       });

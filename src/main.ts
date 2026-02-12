@@ -16,7 +16,7 @@ async function bootstrap() {
     app.enableCors({
       origin: ['http://localhost:3000', 'https://www.obverse.cc'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
       credentials: true,
     });
 

@@ -51,8 +51,9 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
   }
 
   /**
-   * Creates a sub-organization with a Solana wallet for a new user
+   * Creates a sub-organization with Solana and Ethereum wallets for a new user
    * Each user gets their own sub-organization for isolation
+   * The Ethereum address works on all EVM chains (Monad, Ethereum, Base, Polygon, etc.)
    */
   async createSubOrganizationWithWallet(
     params: CreateSubOrgWithWalletParams,
@@ -85,8 +86,7 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
             walletName,
             accounts: [
               SOLANA_WALLET_ACCOUNT,
-              // Uncomment if you want Ethereum support too
-              // ETHEREUM_WALLET_ACCOUNT,
+              ETHEREUM_WALLET_ACCOUNT, // Enabled for EVM chains (Monad, Ethereum, etc.)
             ],
           },
         });
@@ -95,25 +95,30 @@ export class TurnkeyProvider implements ITurnkeyProvider, OnModuleInit {
       const walletId = response.wallet?.walletId;
       const addresses = response.wallet?.addresses || [];
 
-      // Find the Solana address from the response
+      // Find the Solana and Ethereum addresses from the response
       const solanaAddress = addresses[0]; // First address is Solana based on our account order
-      // const ethereumAddress = addresses[1]; // Uncomment if using Ethereum
+      const ethereumAddress = addresses[1]; // Second address is Ethereum/EVM
 
-      if (!subOrganizationId || !walletId || !solanaAddress) {
+      if (
+        !subOrganizationId ||
+        !walletId ||
+        !solanaAddress ||
+        !ethereumAddress
+      ) {
         throw new Error(
           'Failed to extract wallet details from Turnkey response',
         );
       }
 
       this.logger.log(
-        `Created sub-org: ${subOrganizationId}, wallet: ${walletId}, address: ${solanaAddress}`,
+        `Created sub-org: ${subOrganizationId}, wallet: ${walletId}, Solana: ${solanaAddress}, EVM: ${ethereumAddress}`,
       );
 
       return {
         subOrganizationId,
         walletId,
         solanaAddress,
-        // ethereumAddress,
+        ethereumAddress,
       };
     } catch (error) {
       this.logger.error(

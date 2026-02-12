@@ -165,13 +165,69 @@ export class WalletService {
       dto.odaUserId,
     );
     if (existingWallet) {
-      return this.toWalletResponse(existingWallet);
+      const walletWithEvm = await this.ensureEvmAddress(existingWallet);
+      return this.toWalletResponse(walletWithEvm);
     }
     return this.createWalletForUser(dto);
   }
 
   async getWalletDocument(odaUserId: string): Promise<UserWallet | null> {
     return this.walletRepository.findByOdaUserId(odaUserId);
+  }
+
+  /**
+   * Best-effort backfill for old wallets created before EVM address support.
+   * If an EVM address exists in Turnkey accounts, persist it locally.
+   */
+  async backfillEvmAddress(
+    odaUserId: string,
+  ): Promise<WalletResponseDto | null> {
+    const wallet = await this.walletRepository.findByOdaUserId(odaUserId);
+    if (!wallet) {
+      return null;
+    }
+
+    const updated = await this.ensureEvmAddress(wallet);
+    return this.toWalletResponse(updated);
+  }
+
+  private async ensureEvmAddress(wallet: UserWallet): Promise<UserWallet> {
+    if (wallet.ethereumAddress) {
+      return wallet;
+    }
+
+    try {
+      const accounts = await this.turnkeyProvider.getWalletAccounts(
+        wallet.subOrganizationId,
+        wallet.walletId,
+      );
+
+      const evmAccount = accounts.find(
+        (account) => account.addressFormat === 'ADDRESS_FORMAT_ETHEREUM',
+      );
+
+      if (!evmAccount?.address) {
+        this.logger.warn(
+          `No EVM account found for wallet ${wallet.walletId} (user ${wallet.odaUserId})`,
+        );
+        return wallet;
+      }
+
+      const updatedWallet = await this.walletRepository.update(wallet.id, {
+        ethereumAddress: evmAccount.address,
+      });
+
+      this.logger.log(
+        `Backfilled EVM address for user ${wallet.odaUserId}: ${evmAccount.address}`,
+      );
+
+      return updatedWallet;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to backfill EVM address for user ${wallet.odaUserId}: ${error.message}`,
+      );
+      return wallet;
+    }
   }
 
   private toWalletResponse(wallet: UserWallet): WalletResponseDto {
