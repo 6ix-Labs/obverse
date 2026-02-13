@@ -59,6 +59,15 @@ async function bootstrap() {
         },
         'JWT-auth',
       )
+      .addApiKey(
+        {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-API-Key',
+          description: 'API key for agent-to-agent API access',
+        },
+        'X-API-Key',
+      )
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

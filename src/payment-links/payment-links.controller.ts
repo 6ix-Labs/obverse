@@ -190,11 +190,18 @@ export class PaymentLinksController {
       const userAgent = req.headers['user-agent']?.toLowerCase() || '';
       const acceptHeader = req.headers['accept']?.toLowerCase() || '';
 
+      const apiKeyHeader = req.headers['x-api-key'];
+      const formatQuery = String(req.query?.format || '').toLowerCase();
+      const isApiClientRequest =
+        Boolean(apiKeyHeader) ||
+        acceptHeader.includes('application/json') ||
+        formatQuery === 'json';
+
       const isBotOrBrowser =
         this.isSocialMediaBot(userAgent) || acceptHeader.includes('text/html');
 
       // If it's a bot or browser requesting HTML, return HTML with OG tags
-      if (isBotOrBrowser && !acceptHeader.includes('application/json')) {
+      if (isBotOrBrowser && !isApiClientRequest) {
         const baseUrl = this.getBaseUrl(req);
         const html = this.ogTemplateService.generateHTML(paymentLink, baseUrl);
 
