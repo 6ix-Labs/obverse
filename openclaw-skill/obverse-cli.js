@@ -280,18 +280,51 @@ const commands = {
     });
 
     if (result.success) {
+      const paymentId = result.data._id;
+      const isConfirmed =
+        result.data.isConfirmed === true ||
+        result.data.status === 'confirmed' ||
+        (typeof result.data.confirmations === 'number' &&
+          result.data.confirmations > 0);
+
       return {
-        paymentId: result.data._id,
+        paymentId,
         status: result.data.status,
-        isConfirmed:
-          result.data.isConfirmed === true ||
-          result.data.status === 'confirmed' ||
-          (typeof result.data.confirmations === 'number' &&
-            result.data.confirmations > 0),
+        isConfirmed,
         txSignature: result.data.txSignature,
         amount: result.data.amount,
         token: result.data.token,
-        chain: result.data.chain
+        chain: result.data.chain,
+        receipt: result.data.receipt || {
+          receiptId: paymentId,
+          paymentId,
+          linkCode: result.data.linkCode || linkCode,
+          txSignature: result.data.txSignature,
+          amount: result.data.amount,
+          token: result.data.token,
+          chain: result.data.chain,
+          fromAddress: result.data.fromAddress || fromAddress,
+          toAddress: result.data.toAddress || toAddress,
+          status: result.data.status,
+          isConfirmed,
+          confirmedAt: result.data.confirmedAt,
+          createdAt: result.data.createdAt,
+          dashboardUrl: 'https://www.obverse.cc/dashboard'
+        }
+      };
+    }
+
+    return result;
+  },
+
+  // Get receipt by payment ID
+  'get-receipt': async (paymentId) => {
+    const result = await makeRequest(`/payments/${paymentId}/receipt`);
+
+    if (result.success) {
+      return {
+        success: true,
+        receipt: result.data
       };
     }
 
@@ -549,6 +582,7 @@ const commands = {
         'balance <userId> [chain]': 'Get wallet balance',
         'create-invoice <recipient> <amount> [currency] [chain] [dueDate]': 'Create an invoice',
         'submit-payment <linkCode> <txSignature> <chain> <amount> <token> <from> <to> [email]': 'Submit a payment',
+        'get-receipt <paymentId>': 'Get payment receipt by payment ID',
         'generate-qr <address> <amount> [currency] [chain]': 'Generate QR code for payment',
 
         // Convenience Commands (Merchant Sales)
@@ -578,6 +612,7 @@ const commands = {
         'List payments': 'obverse-cli list-payments x7k9m2 10',
         'Check balance': 'obverse-cli balance 123456789 solana',
         'Create invoice': 'obverse-cli create-invoice john@example.com 100 USDC monad',
+        'Get receipt': 'obverse-cli get-receipt 507f1f77bcf86cd799439013',
         'Generate QR': 'obverse-cli generate-qr 0x742d35Cc... 50 USDC solana'
       },
       useCases: {

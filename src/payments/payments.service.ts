@@ -16,6 +16,7 @@ import { TransactionsService } from 'src/transactions/transactions.service';
 import { TransactionType } from 'src/transactions/schemas/transaction.schema';
 import { PaymentLinksService } from 'src/payment-links/payment-links.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { PaymentReceiptDto } from './dto/receipt.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -478,5 +479,53 @@ export class PaymentsService {
       .find({ paymentLinkId: paymentLink._id.toString() })
       .sort({ createdAt: -1 })
       .populate('paymentLinkId');
+  }
+
+  async getReceiptByPaymentId(paymentId: string): Promise<PaymentReceiptDto> {
+    if (!paymentId || paymentId.trim().length === 0) {
+      throw new BadRequestException('Payment ID is required');
+    }
+
+    if (!Types.ObjectId.isValid(paymentId)) {
+      throw new BadRequestException('Invalid payment ID format');
+    }
+
+    const payment = await this.paymentModel.findById(paymentId).exec();
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return this.buildReceiptFromPayment(payment);
+  }
+
+  async buildReceiptFromPayment(
+    payment: PaymentDocument,
+  ): Promise<PaymentReceiptDto> {
+    const paymentLink = await this.paymentLinksService.findById(
+      payment.paymentLinkId.toString(),
+    );
+
+    const chain = String(payment.chain || '').toLowerCase();
+    const explorerBase =
+      chain === 'solana' ? 'https://solscan.io/tx' : 'https://monadscan.com/tx';
+
+    return {
+      receiptId: payment._id.toString(),
+      paymentId: payment._id.toString(),
+      linkCode: paymentLink.linkId,
+      txSignature: payment.txSignature,
+      amount: payment.amount,
+      token: payment.token,
+      chain: payment.chain,
+      fromAddress: payment.fromAddress,
+      toAddress: payment.toAddress,
+      status: payment.status,
+      isConfirmed: payment.status === PaymentStatus.CONFIRMED,
+      confirmedAt: payment.confirmedAt,
+      createdAt: payment.createdAt || new Date(),
+      dashboardUrl: process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
+      explorerUrl: `${explorerBase}/${payment.txSignature}`,
+      customerData: payment.customerData,
+    };
   }
 }

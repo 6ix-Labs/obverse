@@ -7,6 +7,7 @@ import {
   BadRequestException,
   Logger,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
 import { PaymentsService } from './payments.service';
 import { PaymentDocument } from './schemas/payments.schema';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { PaymentReceiptDto } from './dto/receipt.dto';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -69,7 +71,7 @@ export class PaymentsController {
   })
   async createPayment(
     @Body() createPaymentDto: CreatePaymentDto,
-  ): Promise<PaymentDocument> {
+  ): Promise<any> {
     try {
       this.logger.log(
         `Creating payment for link ${createPaymentDto.linkCode} with tx ${createPaymentDto.txSignature}`,
@@ -84,10 +86,14 @@ export class PaymentsController {
           ? (payment as any).toObject()
           : payment;
 
+      const receipt =
+        await this.paymentsService.buildReceiptFromPayment(payment);
+
       return {
         ...paymentObject,
         isConfirmed: payment.status === 'confirmed',
-      } as PaymentDocument;
+        receipt,
+      };
     } catch (error) {
       this.logger.error(
         `Error creating payment: ${error.message}`,
@@ -176,6 +182,56 @@ export class PaymentsController {
         error.stack,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Get payment receipt by payment ID
+   * GET /payments/:paymentId/receipt
+   */
+  @Get(':paymentId/receipt')
+  @ApiOperation({
+    summary: 'Get payment receipt',
+    description:
+      'Retrieve a canonical receipt for a payment. Use this for agent-facing payment confirmations.',
+  })
+  @ApiParam({
+    name: 'paymentId',
+    description: 'Payment document ID',
+    example: '507f1f77bcf86cd799439013',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment receipt retrieved successfully',
+    type: PaymentReceiptDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid payment ID format',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Payment not found',
+  })
+  async getPaymentReceipt(
+    @Param('paymentId') paymentId: string,
+  ): Promise<PaymentReceiptDto> {
+    try {
+      return await this.paymentsService.getReceiptByPaymentId(paymentId);
+    } catch (error) {
+      this.logger.error(
+        `Error fetching receipt for payment ${paymentId}: ${error.message}`,
+        error.stack,
+      );
+
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
+      throw new BadRequestException('Failed to retrieve payment receipt');
     }
   }
 }
