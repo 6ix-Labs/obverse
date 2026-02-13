@@ -3,7 +3,7 @@ services:
     name: obverse-api
     runtime: node
     plan: starter # or free, adjust based on your plan
-    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm run build
     startCommand: pnpm run start
     envVars:
       - key: NODE_ENV
