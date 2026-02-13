@@ -21,7 +21,7 @@ export class MerchantService {
     private readonly walletService: WalletService,
     @Inject(WALLET_REPOSITORY)
     private readonly walletRepository: IWalletRepository,
-  ) {}
+  ) { }
 
   /**
    * Create merchant with Turnkey wallet on /start
@@ -86,6 +86,90 @@ export class MerchantService {
       merchant,
       wallet: walletResponse,
     };
+  }
+
+  /**
+   * Create merchant for an agent (platform-agnostic, no Telegram required).
+   * If walletAddress is provided, uses it directly.
+   * If not, auto-creates a Turnkey wallet.
+   */
+  async createAgentMerchant(data: {
+    username: string;
+    walletAddress?: string;
+    chain?: string;
+  }): Promise<{ merchant: MerchantDocument; wallet?: any }> {
+    const chain = data.chain || 'solana';
+
+    if (data.walletAddress) {
+      // Agent brings their own wallet
+      const wallets = [
+        {
+          address: data.walletAddress,
+          chain,
+          isActive: true,
+          label: 'External Wallet',
+        },
+      ];
+
+      const merchant = new this.merchantModel({
+        username: data.username,
+        walletAddress: data.walletAddress,
+        wallets,
+        defaultChain: chain,
+      });
+
+      await merchant.save();
+
+      this.logger.log(
+        `Created agent merchant ${merchant._id} (${data.username}) with external wallet ${data.walletAddress}`,
+      );
+
+      return { merchant };
+    }
+
+    // No wallet provided — auto-create via Turnkey
+    // Use a unique agent ID as the Turnkey userId
+    const agentUserId = `agent_${new Types.ObjectId().toHexString()}`;
+
+    const walletResponse = await this.walletService.getOrCreateWallet({
+      odaUserId: agentUserId,
+      userName: data.username,
+    });
+
+    const walletDoc = await this.walletService.getWalletDocument(agentUserId);
+
+    const wallets = [
+      {
+        address: walletResponse.solanaAddress,
+        chain: 'solana',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      },
+    ];
+
+    if (walletResponse.ethereumAddress) {
+      wallets.push({
+        address: walletResponse.ethereumAddress,
+        chain: 'monad',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      });
+    }
+
+    const merchant = new this.merchantModel({
+      username: data.username,
+      turnkeyWalletId: walletDoc?.id,
+      walletAddress: walletResponse.solanaAddress,
+      wallets,
+    });
+
+    await merchant.save();
+
+    this.logger.log(
+      `Created agent merchant ${merchant._id} (${data.username}) with Turnkey wallet ${walletResponse.solanaAddress}`,
+    );
+
+    return { merchant, wallet: walletResponse };
   }
 
   /**

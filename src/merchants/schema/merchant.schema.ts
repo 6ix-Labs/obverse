@@ -19,14 +19,14 @@ export class WalletConfig {
 
 @Schema({ timestamps: true })
 export class Merchant {
-  @Prop({ required: true, unique: true })
+  @Prop({ unique: true, sparse: true })
   telegramId?: string;
 
   @Prop({ unique: true, sparse: true })
   farcasterFid?: string;
 
-  @Prop({ required: true })
-  username: string;
+  @Prop()
+  username?: string;
 
   @Prop()
   firstName?: string;

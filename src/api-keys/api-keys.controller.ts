@@ -29,7 +29,7 @@ export class ApiKeysController {
   constructor(
     private readonly apiKeysService: ApiKeysService,
     private readonly merchantService: MerchantService,
-  ) {}
+  ) { }
 
   /**
    * POST /api-keys/create
@@ -150,6 +150,122 @@ export class ApiKeysController {
         expiresAt: result.apiKey.expiresAt,
       },
       key: result.plainKey, // Full key shown only once
+      message: '⚠️ Save this key securely! It will not be shown again.',
+    };
+  }
+
+  /**
+   * POST /api-keys/register
+   * PUBLIC endpoint - Register as a new merchant and get an API key (any platform)
+   */
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Register & get API key (any platform)',
+    description:
+      'Self-service endpoint for agents from any platform (web, Discord, Slack, WhatsApp). Provide a username to create a merchant account and get an API key. Optionally provide your own wallet address, or a Turnkey wallet will be auto-created.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['username'],
+      properties: {
+        username: {
+          type: 'string',
+          description: 'Display name for the merchant account',
+          example: 'my-discord-bot',
+        },
+        walletAddress: {
+          type: 'string',
+          description:
+            'Your existing wallet address (optional — if omitted, a wallet will be auto-created)',
+          example: '0xABC123...',
+        },
+        chain: {
+          type: 'string',
+          description:
+            'Blockchain for the wallet (default: solana)',
+          example: 'solana',
+          default: 'solana',
+        },
+        keyName: {
+          type: 'string',
+          description:
+            'Friendly name for the API key (default: "<username> API Key")',
+          example: 'My Production Key',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Merchant created and API key generated',
+    schema: {
+      example: {
+        success: true,
+        merchant: {
+          _id: '507f1f77bcf86cd799439011',
+          username: 'my-discord-bot',
+          walletAddress: 'GLAQCB5xjnRBG1pF9jNxN373hn7JN44bpuaAPGJcxfyC',
+        },
+        apiKey: {
+          _id: '507f1f77bcf86cd799439012',
+          name: 'my-discord-bot API Key',
+        },
+        key: 'obv_sk_1a2b3c4d...',
+        message:
+          '⚠️ Save this key securely! It will not be shown again.',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Missing username',
+  })
+  async registerAndCreateApiKey(
+    @Body()
+    body: {
+      username: string;
+      walletAddress?: string;
+      chain?: string;
+      keyName?: string;
+    },
+  ) {
+    if (!body.username || !body.username.trim()) {
+      throw new BadRequestException('username is required');
+    }
+
+    // Create merchant (with or without wallet)
+    const { merchant, wallet } =
+      await this.merchantService.createAgentMerchant({
+        username: body.username.trim(),
+        walletAddress: body.walletAddress,
+        chain: body.chain,
+      });
+
+    // Generate API key
+    const keyName = body.keyName || `${body.username.trim()} API Key`;
+    const result = await this.apiKeysService.generateApiKey(
+      merchant._id,
+      keyName,
+    );
+
+    return {
+      success: true,
+      merchant: {
+        _id: merchant._id,
+        username: merchant.username,
+        walletAddress: merchant.walletAddress,
+        wallets: merchant.wallets,
+      },
+      apiKey: {
+        _id: result.apiKey._id,
+        name: result.apiKey.name,
+        merchantId: result.apiKey.merchantId,
+        isActive: result.apiKey.isActive,
+        createdAt: result.apiKey.createdAt,
+      },
+      key: result.plainKey,
       message: '⚠️ Save this key securely! It will not be shown again.',
     };
   }
