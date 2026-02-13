@@ -73,11 +73,11 @@ export class PaymentReceiptDto {
   })
   confirmedAt?: Date;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Payment creation timestamp',
     example: '2026-02-13T18:20:15.000Z',
   })
-  createdAt: Date;
+  createdAt?: Date;
 
   @ApiProperty({
     description: 'Dashboard URL',

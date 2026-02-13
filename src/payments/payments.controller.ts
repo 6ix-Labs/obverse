@@ -86,8 +86,37 @@ export class PaymentsController {
           ? (payment as any).toObject()
           : payment;
 
-      const receipt =
-        await this.paymentsService.buildReceiptFromPayment(payment);
+      let receipt: any;
+      try {
+        receipt = await this.paymentsService.buildReceiptFromPayment(payment);
+      } catch (receiptError) {
+        // Do not fail payment creation if receipt enrichment fails.
+        this.logger.warn(
+          `Payment created but receipt enrichment failed for ${payment._id}: ${receiptError.message}`,
+        );
+
+        receipt = {
+          receiptId: payment._id.toString(),
+          paymentId: payment._id.toString(),
+          linkCode: createPaymentDto.linkCode,
+          txSignature: payment.txSignature,
+          amount: payment.amount,
+          token: payment.token,
+          chain: payment.chain,
+          fromAddress: payment.fromAddress,
+          toAddress: payment.toAddress,
+          status: payment.status,
+          isConfirmed: payment.status === 'confirmed',
+          confirmedAt: payment.confirmedAt,
+          createdAt: payment.createdAt,
+          dashboardUrl: process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
+          explorerUrl:
+            payment.chain?.toLowerCase() === 'solana'
+              ? `https://solscan.io/tx/${payment.txSignature}`
+              : `https://monadscan.com/tx/${payment.txSignature}`,
+          customerData: payment.customerData,
+        };
+      }
 
       return {
         ...paymentObject,

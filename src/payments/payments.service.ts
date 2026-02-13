@@ -522,7 +522,7 @@ export class PaymentsService {
       status: payment.status,
       isConfirmed: payment.status === PaymentStatus.CONFIRMED,
       confirmedAt: payment.confirmedAt,
-      createdAt: payment.createdAt || new Date(),
+      createdAt: payment.createdAt,
       dashboardUrl: process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
       explorerUrl: `${explorerBase}/${payment.txSignature}`,
       customerData: payment.customerData,
