@@ -56,6 +56,7 @@ export class PaymentLinkResponseDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
+    enum: ['solana', 'monad'],
   })
   chain: string;
 

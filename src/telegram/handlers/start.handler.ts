@@ -22,10 +22,23 @@ export class StartHandler {
       await this.merchantsService.findByTelegramId(telegramId);
 
     if (existingMerchant && existingMerchant.walletAddress) {
+      await this.merchantsService.upgradeWalletForEvm(telegramId).catch(() => {
+        // Best effort: don't block /start if wallet upgrade fails.
+      });
+
+      const refreshedMerchant =
+        await this.merchantsService.findByTelegramId(telegramId);
+      const activeChains =
+        refreshedMerchant?.wallets
+          ?.filter((wallet) => wallet.isActive)
+          .map((wallet) => wallet.chain.toUpperCase())
+          .join(', ') || 'SOLANA';
+
       // Existing merchant
       await ctx.reply(
         `👋 Welcome back, ${firstName}!\n\n` +
-          `Your wallet: \`${existingMerchant.walletAddress.slice(0, 8)}...${existingMerchant.walletAddress.slice(-8)}\`\n\n` +
+          `Your wallet: \`${existingMerchant.walletAddress.slice(0, 8)}...${existingMerchant.walletAddress.slice(-8)}\`\n` +
+          `Chains enabled: ${activeChains}\n\n` +
           `What would you like to do?\n\n` +
           `/payment - Create a payment link\n` +
           `/links - View your payment links\n` +

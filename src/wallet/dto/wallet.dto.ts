@@ -145,6 +145,7 @@ export class GetBalanceDto {
 
   @ApiPropertyOptional({
     description: 'Blockchain chain (defaults to solana)',
+    enum: ['solana', 'monad'],
     example: 'solana',
   })
   @IsString()
@@ -235,6 +236,7 @@ export class BalanceResponseDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
+    enum: ['solana', 'monad'],
   })
   chain: string;
 

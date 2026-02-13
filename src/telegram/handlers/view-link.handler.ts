@@ -71,7 +71,12 @@ export class ViewLinkHandler {
         0,
       );
 
-      const paymentUrl = `${process.env.APP_URL}/pay/${link.linkId}`;
+      const paymentBaseUrl = process.env.PAYMENT_URL
+        ? process.env.PAYMENT_URL.replace(/\/$/, '')
+        : process.env.APP_URL
+          ? `${process.env.APP_URL.replace(/\/$/, '')}/pay`
+          : 'https://pay.obverse.app';
+      const paymentUrl = `${paymentBaseUrl}/${link.linkId}`;
       const status = link.isActive ? '✅ Active' : '❌ Inactive';
       const type = link.isReusable ? '🔄 Reusable' : '1️⃣ One-time';
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MerchantService } from '../../merchants/merchants.service';
 import { ConversationManager } from '../conversation/conversation.manager';
+import { getSupportedChains } from '../../blockchain/config/chains.config';
 
 @Injectable()
 export class WalletHandler {
@@ -67,8 +68,6 @@ export class WalletHandler {
 
     if (!merchant) return;
 
-    await ctx.answerCbQuery();
-
     // If merchant has multiple wallets, let them choose which to update
     if (merchant.wallets && merchant.wallets.length > 1) {
       const buttons = merchant.wallets.map((wallet, index) => {
@@ -101,7 +100,6 @@ export class WalletHandler {
 
     if (!merchant) return;
 
-    await ctx.answerCbQuery();
     await this.promptWalletUpdate(ctx, merchant, chain);
   }
 
@@ -191,17 +189,12 @@ export class WalletHandler {
 
     if (!merchant) return;
 
-    await ctx.answerCbQuery();
-
-    // Show available chains to add
-    const existingChains = merchant.wallets?.map((w) => w.chain) || [];
-    const availableChains = [
-      'solana',
-      'ethereum',
-      'base',
-      'polygon',
-      'arbitrum',
-    ].filter((chain) => !existingChains.includes(chain));
+    // Show available chains to add (from backend-supported chain config)
+    const existingChains =
+      merchant.wallets?.map((w) => w.chain.toLowerCase()) || [];
+    const availableChains = getSupportedChains().filter(
+      (chain) => !existingChains.includes(chain.toLowerCase()),
+    );
 
     if (availableChains.length === 0) {
       await ctx.reply(
@@ -234,8 +227,6 @@ export class WalletHandler {
     const merchant = await this.merchantsService.findByTelegramId(telegramId);
 
     if (!merchant) return;
-
-    await ctx.answerCbQuery();
 
     await this.conversationManager.setState(
       telegramId,

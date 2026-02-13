@@ -57,32 +57,42 @@ export class SendHandler {
 
   private async showWalletSelection(ctx: any, merchant: any) {
     try {
-      // Filter for active Solana wallets
-      const solanaWallets = merchant.wallets.filter(
-        (w: any) => w.chain === 'solana' && w.isActive,
+      // /send currently supports Solana transfers only.
+      const activeWallets = merchant.wallets.filter(
+        (w: any) => w.isActive && w.chain === 'solana',
       );
 
-      if (solanaWallets.length === 0) {
+      if (activeWallets.length === 0) {
         await ctx.reply(
-          `⚠️ No Solana wallets found.\n\n` +
-            `Add a Solana wallet using /wallet first.`,
+          `⚠️ No active Solana wallet found.\n\n` +
+            `Current /send supports Solana transfers only.\n` +
+            `Use /wallet to add or activate a Solana wallet.`,
         );
         return;
       }
 
       // Fetch balances for each wallet
       const walletsWithBalance = await Promise.all(
-        solanaWallets.map(async (wallet: any) => {
+        activeWallets.map(async (wallet: any) => {
           try {
             const balance = await this.getSOLBalance(wallet.address);
-            this.logger.log(`Balance for ${wallet.address}: ${balance} SOL`);
-            return { ...wallet, balance };
+            const symbol = 'SOL';
+
+            this.logger.log(
+              `Balance for ${wallet.address} on ${wallet.chain}: ${balance} ${symbol}`,
+            );
+            return { ...wallet, balance, symbol };
           } catch (error) {
             this.logger.error(
               `Failed to fetch balance for ${wallet.address}: ${error.message}`,
               error.stack,
             );
-            return { ...wallet, balance: 0, error: error.message };
+            return {
+              ...wallet,
+              balance: 0,
+              error: error.message,
+              symbol: 'N/A',
+            };
           }
         }),
       );
@@ -108,15 +118,15 @@ export class SendHandler {
               `If the issue persists, please try again in a few moments.`,
           );
         } else {
-          // All wallets fetched successfully but have 0 SOL
+          // All wallets fetched successfully but have 0 balance
           await ctx.reply(
-            `⚠️ Insufficient SOL for transaction fees.\n\n` +
-              `Your Solana wallet(s) have 0 SOL.\n\n` +
-              `⚡️ You need at least 0.001 SOL (~$0.20) to pay for transaction fees, even when sending USDC or other tokens.\n\n` +
-              `💡 To send your USDC:\n` +
+            `⚠️ Insufficient funds for transaction fees.\n\n` +
+              `Your wallets have 0 balance for native token (SOL).\n\n` +
+              `⚡️ You need at least 0.001 native tokens to pay for transaction fees.\n\n` +
+              `💡 To send tokens:\n` +
               `1. Transfer some SOL to your wallet first\n` +
               `2. Then use /send to transfer your tokens\n\n` +
-              `Use /balance to view your wallet address and check your balance.`,
+              `Use /balance to view your wallet addresses and check balances.`,
           );
         }
         return;
@@ -125,10 +135,13 @@ export class SendHandler {
       // Build inline keyboard with wallet options
       const buttons = walletsWithFunds.map((wallet: any) => {
         const label = wallet.label || 'Wallet';
+        const chainName =
+          wallet.chain.charAt(0).toUpperCase() + wallet.chain.slice(1);
         const maskedAddress = `${wallet.address.slice(0, 4)}...${wallet.address.slice(-4)}`;
+        const balanceText = `${wallet.balance.toFixed(4)} ${wallet.symbol}`;
         return [
           {
-            text: `${label} (${wallet.balance.toFixed(4)} SOL) - ${maskedAddress}`,
+            text: `${chainName} ${label} (${balanceText}) - ${maskedAddress}`,
             callback_data: `send_wallet:${wallet.address}`,
           },
         ];
@@ -880,5 +893,59 @@ export class SendHandler {
 
   private getExplorerUrl(signature: string): string {
     return `https://solscan.io/tx/${signature}`;
+  }
+
+  private async getEVMBalance(address: string, chain: string): Promise<number> {
+    try {
+      const rpcUrl = this.getRpcUrl(chain);
+
+      // Make JSON-RPC request to get balance
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_getBalance',
+          params: [address, 'latest'],
+          id: 1,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+
+      // Convert hex balance to decimal (wei)
+      const balanceWei = BigInt(data.result);
+
+      // Convert wei to ether (divide by 10^18)
+      const balanceEth = Number(balanceWei) / 1e18;
+
+      return balanceEth;
+    } catch (error) {
+      this.logger.error(`Error fetching ${chain} balance: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private getRpcUrl(chain: string): string {
+    try {
+      // Import this from chains config to get the proper RPC URL
+      const {
+        getChainConfig,
+      } = require('../../blockchain/config/chains.config');
+      return getChainConfig(chain).rpcUrls[0];
+    } catch (error) {
+      // Fallback URLs if config import fails
+      const fallbackUrls: Record<string, string> = {
+        monad: process.env.MONAD_RPC_URL || 'https://rpc.monad.xyz',
+        ethereum: 'https://eth.llamarpc.com',
+      };
+      return fallbackUrls[chain] || fallbackUrls.ethereum;
+    }
   }
 }

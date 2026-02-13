@@ -1,19 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MerchantService } from '../../merchants/merchants.service';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { getChainConfig } from '../../blockchain/config/chains.config';
 
 @Injectable()
 export class BalanceHandler {
   private readonly logger = new Logger(BalanceHandler.name);
   private solanaConnection: Connection;
-
-  // Public RPC endpoints for EVM chains
-  private rpcUrls = {
-    ethereum: 'https://eth.llamarpc.com',
-    polygon: 'https://polygon-rpc.com',
-    arbitrum: 'https://arb1.arbitrum.io/rpc',
-    base: 'https://mainnet.base.org',
-  };
 
   constructor(private merchantsService: MerchantService) {
     // Initialize Solana connection (you can make this configurable)
@@ -221,23 +214,10 @@ export class BalanceHandler {
   // }
 
   private getRpcUrl(chain: string): string {
-    return this.rpcUrls[chain.toLowerCase()] || this.rpcUrls.ethereum;
+    return getChainConfig(chain).rpcUrls[0];
   }
 
   private getNativeSymbol(chain: string): string {
-    switch (chain.toLowerCase()) {
-      case 'ethereum':
-        return 'ETH';
-      case 'polygon':
-        return 'MATIC';
-      case 'arbitrum':
-        return 'ETH';
-      case 'base':
-        return 'ETH';
-      case 'solana':
-        return 'SOL';
-      default:
-        return 'ETH';
-    }
+    return getChainConfig(chain).nativeCurrency.symbol;
   }
 }

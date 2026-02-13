@@ -471,6 +471,13 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
           return;
         }
 
+        // Handle create_new callback (doesn't require conversation state)
+        if (data === 'create_new') {
+          await ctx.answerCbQuery();
+          await this.createLinkHandler.handle(ctx);
+          return;
+        }
+
         // Handle other callbacks that require conversation state
         const state = await this.conversationManager.getState(telegramId);
         if (!state) {
@@ -480,10 +487,10 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
 
         if (data.startsWith('fields:')) {
           await this.createLinkHandler.handleCustomFieldsInput(ctx, state);
+        } else if (data.startsWith('chain:')) {
+          await this.createLinkHandler.handleChainSelection(ctx, state);
         } else if (data.startsWith('reusable:')) {
           await this.createLinkHandler.handleReusableInput(ctx, state);
-        } else if (data === 'create_new') {
-          await this.createLinkHandler.handle(ctx);
         }
       } catch (error) {
         this.logger.error(

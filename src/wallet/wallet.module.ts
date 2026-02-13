@@ -1,5 +1,4 @@
-import { Module } from '@nestjs/common';
-// import { WalletService } from './wallet.service';
+import { Module, forwardRef } from '@nestjs/common';
 import { WalletController } from './wallet.controller';
 import { ConfigModule } from '@nestjs/config';
 import turnkeyConfig from './config/turnkey.config';
@@ -18,6 +17,7 @@ import {
   Transaction,
   TransactionSchema,
 } from '../transactions/schemas/transaction.schema';
+import { BlockchainModule } from '../blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -26,6 +26,7 @@ import {
       { name: UserWalletModel.name, schema: UserWalletSchema },
       { name: Transaction.name, schema: TransactionSchema },
     ]),
+    forwardRef(() => BlockchainModule), // Import BlockchainModule to access EvmService
   ],
   providers: [
     WalletService,

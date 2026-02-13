@@ -16,7 +16,7 @@ async function bootstrap() {
     app.enableCors({
       origin: ['http://localhost:3000', 'https://www.obverse.cc'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
       credentials: true,
     });
 
@@ -58,6 +58,15 @@ async function bootstrap() {
           in: 'header',
         },
         'JWT-auth',
+      )
+      .addApiKey(
+        {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-API-Key',
+          description: 'API key for agent-to-agent API access',
+        },
+        'X-API-Key',
       )
       .build();
 
