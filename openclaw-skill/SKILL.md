@@ -1,6 +1,6 @@
 ---
 name: obverse-payments
-description: Accept stablecoin payments (USDC/USDT) for products, services, and fundraising via Telegram, WhatsApp, Discord
+description: End-to-end stablecoin payments — links, invoices, receipts, dashboards — across Telegram, WhatsApp, Discord
 homepage: https://www.obverse.cc
 user-invocable: true
 metadata:
