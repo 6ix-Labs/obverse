@@ -5,11 +5,11 @@
     "description": "Complete stablecoin payment solution for AI agents - invoices, products, and crowdfunding on Solana/Monad",
     "author": {
         "name": "Obverse Team",
-        "email": "support@obverse.app",
-        "url": "https://obverse.app"
+        "email": "obverse.ccc@gmail.com",
+        "url": "https://obverse.cc"
     },
     "repository": "https://github.com/obverse/openclaw-skill",
-    "homepage": "https://obverse.app",
+    "homepage": "https://obverse.cc",
     "license": "MIT",
     "category": "payments",
     "tags": [
@@ -36,27 +36,17 @@
     },
     "setup": {
         "requiresApiKey": true,
-        "apiKeyUrl": "https://obverse.app/api-keys",
+        "apiKeyUrl": "https://obverse.onrender.com/api-keys/register",
         "envVars": {
             "OBVERSE_API_KEY": {
                 "required": true,
-                "description": "Your Obverse API key (get one from https://obverse.app/api-keys or use the register endpoint)"
+                "description": "Your Obverse API key. Register programmatically: curl -X POST https://obverse.onrender.com/api-keys/register -H 'Content-Type: application/json' -d '{\"username\": \"your-agent-name\"}'"
             },
             "OBVERSE_API_URL": {
                 "required": false,
                 "default": "https://obverse.onrender.com",
                 "description": "Obverse API base URL"
             }
-        }
-    },
-    "screenshots": [
-        "https://obverse.app/screenshots/openclaw-telegram.png",
-        "https://obverse.app/screenshots/openclaw-payment.png"
-    ],
-    "pricing": {
-        "free": {
-            "transactions": 100,
-            "fee": "1.5%"
         }
     }
 }

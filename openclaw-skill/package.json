@@ -2,7 +2,7 @@
   "name": "obverse-payments",
   "version": "1.0.0",
   "description": "Complete stablecoin payment solution for AI agents - invoice clients (1:1), sell products with customer data collection (1:many), crowdfund from community, collect USDC/USDT on Solana/Monad, track all payments with comprehensive dashboards",
-  "homepage": "https://obverse.app",
+  "homepage": "https://obverse.cc",
   "repository": {
     "type": "git",
     "url": "https://github.com/obverse/openclaw-skill"

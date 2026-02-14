@@ -38,7 +38,7 @@ openclaw skills install obverse-payments
 
 ### 2. Get Your API Key
 
-1. Visit [https://obverse.app/signup](https://obverse.app/signup)
+1. Visit [https://obverse.cc/signup](https://obverse.cc/signup)
 2. Connect your wallet (MetaMask, Phantom, etc.)
 3. Choose a plan:
    - **Free**: 100 transactions/month
@@ -124,7 +124,7 @@ Agent: ✅ Invoice created!
        Total: 375 USDC
        Due: 2026-03-01
 
-       Invoice: https://obverse.app/invoice/inv_xyz456
+       Invoice: https://obverse.cc/invoice/inv_xyz456
        Payment Link: https://pay.obverse.app/xyz456
 ```
 
@@ -176,7 +176,7 @@ Default: **Solana** (matches current backend default chain support)
 - **Pro**: 2,000 txns/month, 300 API calls/min
 - **Enterprise**: Unlimited
 
-[View full pricing →](https://obverse.app/pricing)
+[View full pricing →](https://obverse.cc/pricing)
 
 ## Troubleshooting
 
@@ -187,7 +187,7 @@ Default: **Solana** (matches current backend default chain support)
 cat ~/.openclaw/openclaw.json | grep OBVERSE_API_KEY
 
 # Make sure it starts with obv_sk_
-# Get a new key at: https://obverse.app/settings/api-keys
+# Get a new key at: https://obverse.cc/settings/api-keys
 ```
 
 ### "Skill not found"
@@ -217,7 +217,7 @@ brew install curl jq
 
 Your plan's API rate limit was hit. Solutions:
 1. Wait 60 seconds and retry
-2. Upgrade your plan at [obverse.app/pricing](https://obverse.app/pricing)
+2. Upgrade your plan at [obverse.app/pricing](https://obverse.cc/pricing)
 3. Implement request batching in your workflow
 
 ### Payment link expired
@@ -253,7 +253,7 @@ If you're running Obverse on your own infrastructure:
 
 Configure webhooks to get real-time notifications:
 
-1. Go to [obverse.app/settings/webhooks](https://obverse.app/settings/webhooks)
+1. Go to [obverse.app/settings/webhooks](https://obverse.cc/settings/webhooks)
 2. Add your webhook URL
 3. Select events: `payment.completed`, `payment.expired`, `withdrawal.completed`
 4. Your agent will receive instant notifications
@@ -297,7 +297,7 @@ To use Obverse across multiple agents:
 
 Full API documentation is available at:
 - **Swagger UI**: [obverse.onrender.com/api-docs](https://obverse.onrender.com/api-docs)
-- **REST API Guide**: [docs.obverse.app/api](https://docs.obverse.app/api)
+- **REST API Guide**: [obverse.onrender.com/api-docs/api](https://obverse.onrender.com/api-docs/api)
 - **SDKs**: JavaScript/TypeScript, Python, Go
 
 ## Security Best Practices
@@ -312,10 +312,10 @@ Full API documentation is available at:
 
 ## Support
 
-- **Documentation**: [docs.obverse.app](https://docs.obverse.app)
+- **Documentation**: [obverse.onrender.com/api-docs](https://obverse.onrender.com/api-docs)
 - **Discord**: [discord.gg/obverse](https://discord.gg/obverse)
-- **Email**: support@obverse.app
-- **Status Page**: [status.obverse.app](https://status.obverse.app)
+- **Email**: obverse.ccc@gmail.com
+- **Status Page**: [obverse.onrender.com](https://obverse.onrender.com)
 - **GitHub Issues**: [github.com/obverse/openclaw-skill/issues](https://github.com/obverse/openclaw-skill/issues)
 
 ## Contributing
@@ -359,4 +359,4 @@ Built with:
 
 **Made with ❤️ by the Obverse Team**
 
-[Website](https://obverse.app) | [Twitter](https://twitter.com/obverse) | [Discord](https://discord.gg/obverse) | [GitHub](https://github.com/obverse)
+[Website](https://obverse.cc) | [Twitter](https://twitter.com/obverse) | [Discord](https://discord.gg/obverse) | [GitHub](https://github.com/obverse)

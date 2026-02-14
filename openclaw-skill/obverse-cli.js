@@ -16,7 +16,7 @@ if (!API_KEY) {
   console.error(JSON.stringify({
     error: 'OBVERSE_API_KEY environment variable is required',
     message: 'Please set your API key in openclaw.json or export OBVERSE_API_KEY',
-    docs: 'https://docs.obverse.app/quickstart'
+    docs: 'https://obverse.onrender.com/api-docs/quickstart'
   }, null, 2));
   process.exit(1);
 }
@@ -628,7 +628,7 @@ const commands = {
         'OBVERSE_API_URL': 'Base URL for Obverse API (default: https://obverse.onrender.com)',
         'Supported chains': SUPPORTED_CHAINS.join(', ')
       },
-      documentation: 'https://docs.obverse.app'
+      documentation: 'https://obverse.onrender.com/api-docs'
     };
   }
 };

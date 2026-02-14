@@ -400,11 +400,11 @@ Add `clawhub.json`:
   "description": "Accept stablecoin payments (USDC/USDT) via AI agents on Base and Solana",
   "author": {
     "name": "Obverse Team",
-    "email": "support@obverse.app",
-    "url": "https://obverse.app"
+    "email": "obverse.ccc@gmail.com",
+    "url": "https://obverse.cc"
   },
   "repository": "https://github.com/YOUR_USERNAME/obverse-openclaw-skill",
-  "homepage": "https://obverse.app",
+  "homepage": "https://obverse.cc",
   "license": "MIT",
   "category": "payments",
   "tags": ["payments", "crypto", "usdc", "base", "solana", "web3"],
@@ -415,7 +415,7 @@ Add `clawhub.json`:
   },
   "setup": {
     "requiresApiKey": true,
-    "apiKeyUrl": "https://obverse.app/api-keys",
+    "apiKeyUrl": "https://obverse.cc/api-keys",
     "envVars": {
       "OBVERSE_API_KEY": {
         "required": true,
@@ -429,8 +429,8 @@ Add `clawhub.json`:
     }
   },
   "screenshots": [
-    "https://obverse.app/screenshots/openclaw-telegram.png",
-    "https://obverse.app/screenshots/openclaw-payment.png"
+    "https://obverse.cc/screenshots/openclaw-telegram.png",
+    "https://obverse.cc/screenshots/openclaw-payment.png"
   ],
   "pricing": {
     "free": {
@@ -514,7 +514,7 @@ Turn your OpenClaw agent into a payment processor:
 Free tier: 100 txns/month
 Install: `openclaw skills install obverse-payments`
 
-Docs: https://docs.obverse.app/openclaw
+Docs: https://obverse.onrender.com/api-docs/openclaw
 ```
 
 ---
@@ -565,8 +565,8 @@ async subscribe(@Body() dto: SubscribeDto) {
       quantity: 1,
     }],
     mode: 'subscription',
-    success_url: 'https://obverse.app/success',
-    cancel_url: 'https://obverse.app/pricing',
+    success_url: 'https://obverse.cc/success',
+    cancel_url: 'https://obverse.cc/pricing',
   });
 
   return { sessionUrl: session.url };
@@ -617,7 +617,7 @@ Every payment page shows:
 ```html
 <!-- pay.obverse.app/xyz123 -->
 <footer>
-  <p>Powered by <a href="https://obverse.app">Obverse</a></p>
+  <p>Powered by <a href="https://obverse.cc">Obverse</a></p>
   <p>Accept crypto payments via AI agents</p>
   <button>Sign up free</button>
 </footer>
@@ -626,7 +626,7 @@ Every payment page shows:
 **3. Merchant Referrals**
 ```typescript
 // Give merchants referral links
-const referralLink = `https://obverse.app/signup?ref=${merchant.id}`;
+const referralLink = `https://obverse.cc/signup?ref=${merchant.id}`;
 
 // Track conversions
 @Post('signup')
@@ -789,12 +789,12 @@ Aggressive (5,000 merchants):
 
 - **OpenClaw Docs**: https://docs.openclaw.ai
 - **ClawHub**: https://clawhub.ai
-- **Obverse Docs**: https://docs.obverse.app
-- **Support Email**: support@obverse.app
+- **Obverse Docs**: https://obverse.onrender.com/api-docs
+- **Support Email**: obverse.ccc@gmail.com
 - **Discord**: https://discord.gg/obverse
 
 ---
 
-**Need help?** Open an issue on GitHub or email support@obverse.app
+**Need help?** Open an issue on GitHub or email obverse.ccc@gmail.com
 
 **Good luck with your launch! 🚀**

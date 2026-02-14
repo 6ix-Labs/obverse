@@ -29,6 +29,40 @@ Accept USDC/USDT payments on Solana and Monad for any purpose: selling products,
 
 ---
 
+## Quick Setup
+
+### 1. Register & Get API Key
+
+```bash
+# Register from any platform (no Telegram required!)
+curl -X POST https://obverse.onrender.com/api-keys/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your-agent-name"}'
+
+# With your own wallet:
+curl -X POST https://obverse.onrender.com/api-keys/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your-agent-name", "walletAddress": "YOUR_WALLET", "chain": "solana"}'
+```
+
+Response includes your API key (`obv_sk_...`) and wallet address. **Save the key — it's shown only once!**
+
+### 2. Set Environment Variables
+
+```bash
+export OBVERSE_API_KEY="obv_sk_your_key_here"
+export OBVERSE_API_URL="https://obverse.onrender.com"  # optional, this is the default
+```
+
+### 3. Start Using
+
+```bash
+# Create a payment link
+obverse-cli create-link 50 USDC solana "My first payment"
+```
+
+---
+
 ## Three Main Use Cases
 
 ### 1. 🛍️ **Product/Service Sales** (Merchant Sales)
@@ -474,8 +508,10 @@ Agent: ✅ Custom Payment Link Created!
 ```bash
 # Check your API key
 echo $OBVERSE_API_KEY
-# Get new key at: https://www.obverse.cc/settings/api-keys
-```
+# Register for a new key:
+curl -X POST https://obverse.onrender.com/api-keys/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username": "your-agent-name"}'
 
 **"Payment link not found"**
 ```bash
@@ -486,7 +522,6 @@ obverse-cli check-payment <linkCode>
 **"Rate limit exceeded"**
 ```bash
 # Wait 60 seconds and retry
-# Or upgrade plan at: https://www.obverse.cc/pricing
 ```
 
 ---
@@ -503,10 +538,8 @@ obverse-cli check-payment <linkCode>
 
 ## Getting Help
 
-- **Docs**: [docs.obverse.app](https://docs.obverse.app)
-- **API**: [obverse.onrender.com/api-docs](https://obverse.onrender.com/api-docs)
-- **Support**: support@obverse.app
-- **Discord**: [discord.gg/obverse](https://discord.gg/obverse)
+- **API Docs**: [obverse.onrender.com/api-docs](https://obverse.onrender.com/api-docs)
+- **Support**: obverse.ccc@gmail.com
 
 ---
 
