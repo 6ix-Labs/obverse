@@ -14,7 +14,7 @@ metadata:
 
 **One generic payment link. Multiple use cases.**
 
-Accept USDC/USDT payments on Solana and Monad for any purpose: selling products, fundraising, invoicing, or simple payments.
+Accept Stablecoin (USDC) payments on Solana and Monad for any purpose: selling products, fundraising, invoicing, or simple payments.
 
 ## What This Skill Does
 
@@ -495,8 +495,8 @@ Agent: ✅ Custom Payment Link Created!
 
 | Chain | Currencies | Fees |
 |-------|-----------|------|
-| **Solana** | USDC, USDT, SOL | low |
-| Monad | USDC, USDT | low |
+| **Solana** | USDC | low |
+| Monad | USDC | low |
 
 ---
 
