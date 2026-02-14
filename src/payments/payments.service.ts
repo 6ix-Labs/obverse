@@ -4,6 +4,8 @@ import {
   BadRequestException,
   ConflictException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -17,6 +19,7 @@ import { TransactionType } from 'src/transactions/schemas/transaction.schema';
 import { PaymentLinksService } from 'src/payment-links/payment-links.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentReceiptDto } from './dto/receipt.dto';
+import { InvoicesService } from '../invoices/invoices.service';
 
 @Injectable()
 export class PaymentsService {
@@ -26,7 +29,9 @@ export class PaymentsService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     private transactionsService: TransactionsService,
     private paymentLinksService: PaymentLinksService,
-  ) {}
+    @Inject(forwardRef(() => InvoicesService))
+    private invoicesService: InvoicesService,
+  ) { }
 
   /**
    * Create payment from frontend after blockchain transaction
@@ -139,6 +144,25 @@ export class PaymentsService {
         `Failed to increment payment count for link ${dto.linkCode}: ${error.message}`,
       );
       // Don't fail the payment creation if this fails
+    }
+
+    // 10. Auto-link to invoice if this payment link belongs to one
+    if (isConfirmed) {
+      try {
+        const invoice = await this.invoicesService.markAsPaid(
+          paymentLink._id.toString(),
+          payment._id.toString(),
+        );
+        if (invoice) {
+          this.logger.log(
+            `Invoice ${invoice.invoiceNumber} auto-marked as PAID via payment ${payment._id}`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Failed to auto-link payment to invoice: ${error.message}`,
+        );
+      }
     }
 
     this.logger.log(
@@ -507,7 +531,20 @@ export class PaymentsService {
 
     const chain = String(payment.chain || '').toLowerCase();
     const explorerBase =
-      chain === 'solana' ? 'https://solscan.io/tx' : 'https://monadscan.com/tx';
+      getChainConfig(chain).blockExplorerUrls[0];
+
+    // Look up linked invoice (if any)
+    let invoiceNumber: string | undefined;
+    try {
+      const invoice = await this.invoicesService.findByPaymentLinkId(
+        paymentLink._id.toString(),
+      );
+      if (invoice) {
+        invoiceNumber = invoice.invoiceNumber;
+      }
+    } catch {
+      // Ignore — no invoice linked
+    }
 
     return {
       receiptId: payment._id.toString(),
@@ -524,8 +561,9 @@ export class PaymentsService {
       confirmedAt: payment.confirmedAt,
       createdAt: payment.createdAt,
       dashboardUrl: process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
-      explorerUrl: `${explorerBase}/${payment.txSignature}`,
+      explorerUrl: `${explorerBase}/tx/${payment.txSignature}`,
       customerData: payment.customerData,
+      invoiceNumber,
     };
   }
 }

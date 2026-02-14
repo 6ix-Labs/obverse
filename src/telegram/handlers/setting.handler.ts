@@ -7,7 +7,7 @@ export class SettingsHandler {
   constructor(
     private merchantsService: MerchantService,
     private conversationManager: ConversationManager,
-  ) {}
+  ) { }
 
   async handle(ctx: any) {
     const telegramId = ctx.from.id.toString();
@@ -18,48 +18,55 @@ export class SettingsHandler {
       return;
     }
 
-    await this.showSettings(ctx, merchant);
+    const needsUpgrade = await this.merchantsService.needsWalletUpgrade(telegramId);
+    await this.showSettings(ctx, merchant, needsUpgrade);
   }
 
-  private async showSettings(ctx: any, merchant: any) {
+  private async showSettings(ctx: any, merchant: any, needsUpgrade = false) {
     const notificationStatus = merchant.notificationsEnabled
       ? '🔔 ON'
       : '🔕 OFF';
     const webhookStatus = merchant.webhookUrl ? '✅ Set' : '❌ Not set';
 
-    const keyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: `Default Token: ${merchant.defaultToken}`,
-            callback_data: 'setting:token',
-          },
-        ],
-        [
-          {
-            text: `Notifications: ${notificationStatus}`,
-            callback_data: 'setting:notifications',
-          },
-        ],
-        [
-          {
-            text: `Webhook: ${webhookStatus}`,
-            callback_data: 'setting:webhook',
-          },
-        ],
-        [{ text: '📋 Default Fields', callback_data: 'setting:fields' }],
-        [{ text: '« Back', callback_data: 'cancel' }],
+    const buttons: any[][] = [
+      [
+        {
+          text: `Default Token: ${merchant.defaultToken}`,
+          callback_data: 'setting:token',
+        },
       ],
-    };
+      [
+        {
+          text: `Notifications: ${notificationStatus}`,
+          callback_data: 'setting:notifications',
+        },
+      ],
+      [
+        {
+          text: `Webhook: ${webhookStatus}`,
+          callback_data: 'setting:webhook',
+        },
+      ],
+      [{ text: '📋 Default Fields', callback_data: 'setting:fields' }],
+    ];
+
+    // Show upgrade button only for Solana-only users
+    if (needsUpgrade) {
+      buttons.push([{ text: '🔄 Upgrade Wallet (+ Monad)', callback_data: 'setting:upgrade_wallet' }]);
+    }
+
+    buttons.push([{ text: '« Back', callback_data: 'cancel' }]);
+
+    const keyboard = { inline_keyboard: buttons };
 
     await ctx.reply(
       `⚙️ Settings\n\n` +
-        `Configure your default preferences for payment links.\n\n` +
-        `Current settings:\n` +
-        `• Default Token: ${merchant.defaultToken}\n` +
-        `• Notifications: ${merchant.notificationsEnabled ? 'Enabled' : 'Disabled'}\n` +
-        `• Webhook URL: ${merchant.webhookUrl || 'Not set'}\n` +
-        `• Default Fields: ${merchant.defaultCustomFields?.join(', ') || 'None'}`,
+      `Configure your default preferences for payment links.\n\n` +
+      `Current settings:\n` +
+      `• Default Token: ${merchant.defaultToken}\n` +
+      `• Notifications: ${merchant.notificationsEnabled ? 'Enabled' : 'Disabled'}\n` +
+      `• Webhook URL: ${merchant.webhookUrl || 'Not set'}\n` +
+      `• Default Fields: ${merchant.defaultCustomFields?.join(', ') || 'None'}`,
       { reply_markup: keyboard },
     );
   }
@@ -79,7 +86,7 @@ export class SettingsHandler {
 
     await ctx.reply(
       `🪙 Select Default Token\n\n` +
-        `This will be the default token for new payment links.`,
+      `This will be the default token for new payment links.`,
       { reply_markup: keyboard },
     );
   }
@@ -140,9 +147,9 @@ export class SettingsHandler {
 
     await ctx.reply(
       `🔗 Set Webhook URL\n\n` +
-        `Send me the URL where you want to receive payment notifications.\n\n` +
-        `Example: \`https://yourdomain.com/webhook\`\n\n` +
-        `Type \`remove\` to remove the current webhook, or \`cancel\` to abort.`,
+      `Send me the URL where you want to receive payment notifications.\n\n` +
+      `Example: \`https://yourdomain.com/webhook\`\n\n` +
+      `Type \`remove\` to remove the current webhook, or \`cancel\` to abort.`,
       { parse_mode: 'Markdown' },
     );
   }
@@ -172,8 +179,8 @@ export class SettingsHandler {
     if (!urlRegex.test(input)) {
       await ctx.reply(
         `❌ Invalid URL.\n\n` +
-          `Please send a valid HTTP/HTTPS URL.\n` +
-          `Or type \`cancel\` to abort.`,
+        `Please send a valid HTTP/HTTPS URL.\n` +
+        `Or type \`cancel\` to abort.`,
         { parse_mode: 'Markdown' },
       );
       return;
@@ -187,8 +194,8 @@ export class SettingsHandler {
 
     await ctx.reply(
       `✅ Webhook URL updated!\n\n` +
-        `URL: \`${input}\`\n\n` +
-        `You'll receive POST requests when payments are confirmed.`,
+      `URL: \`${input}\`\n\n` +
+      `You'll receive POST requests when payments are confirmed.`,
       { parse_mode: 'Markdown' },
     );
   }
@@ -229,10 +236,10 @@ export class SettingsHandler {
 
     await ctx.reply(
       `📋 Set Default Fields\n\n` +
-        `These fields will be automatically selected when creating new payment links.\n\n` +
-        `Type field names separated by commas:\n` +
-        `Example: \`name, email, company\`\n\n` +
-        `Or use quick options below:`,
+      `These fields will be automatically selected when creating new payment links.\n\n` +
+      `Type field names separated by commas:\n` +
+      `Example: \`name, email, company\`\n\n` +
+      `Or use quick options below:`,
       { parse_mode: 'Markdown', reply_markup: keyboard },
     );
   }
@@ -263,8 +270,43 @@ export class SettingsHandler {
 
     await ctx.reply(
       `✅ Default fields updated!\n\n` +
-        `Default fields: ${fieldsText}\n\n` +
-        `These will be pre-selected when you create new payment links.`,
+      `Default fields: ${fieldsText}\n\n` +
+      `These will be pre-selected when you create new payment links.`,
     );
+  }
+
+  async handleWalletUpgrade(ctx: any) {
+    const telegramId = ctx.from.id.toString();
+
+    await ctx.reply('🔄 Upgrading your wallet to support Monad...');
+
+    try {
+      const result = await this.merchantsService.upgradeWalletForEvm(telegramId);
+
+      if (result.wasUpgraded && result.wallet?.ethereumAddress) {
+        const maskedAddr = `${result.wallet.ethereumAddress.slice(0, 6)}...${result.wallet.ethereumAddress.slice(-4)}`;
+        await ctx.reply(
+          `✅ Wallet upgraded!\n\n` +
+          `Your new Monad wallet:\n\`${maskedAddr}\`\n\n` +
+          `You can now accept payments on both Solana and Monad.`,
+          { parse_mode: 'Markdown' },
+        );
+      } else if (result.wallet?.ethereumAddress) {
+        await ctx.reply(
+          `✅ Your wallet already supports Monad!\n\n` +
+          `Use /wallet to view all your addresses.`,
+        );
+      } else {
+        await ctx.reply(
+          `⚠️ Could not auto-derive a Monad address.\n\n` +
+          `You can add one manually via /wallet → ➕ Add Wallet.`,
+        );
+      }
+    } catch (error) {
+      await ctx.reply(
+        `❌ Upgrade failed: ${error.message}\n\n` +
+        `You can try again later or add a Monad wallet manually via /wallet.`,
+      );
+    }
   }
 }

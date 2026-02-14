@@ -58,7 +58,7 @@ async function testChainConfiguration() {
 
   // Test 1.1: Check supported chains
   const supportedChains = getSupportedChains();
-  if (supportedChains.includes('monad') && supportedChains.includes('solana')) {
+  if (supportedChains.includes('monad') && supportedChains.includes('solana') && supportedChains.includes('monad_testnet')) {
     success(`Supported chains: ${supportedChains.join(', ')}`);
   } else {
     error('Missing expected chains');
@@ -220,10 +220,18 @@ async function testEvmServiceConnection() {
 
   try {
     // Create a provider
+    // Create a provider for Monad Mainnet
     const monadConfig = getChainConfig('monad');
     const provider = new ethers.JsonRpcProvider(monadConfig.rpcUrls[0], {
       chainId: monadConfig.chainId,
       name: monadConfig.name,
+    });
+
+    // Create a provider for Monad Testnet
+    const monadTestnetConfig = getChainConfig('monad_testnet');
+    const testnetProvider = new ethers.JsonRpcProvider(monadTestnetConfig.rpcUrls[0], {
+      chainId: monadTestnetConfig.chainId,
+      name: monadTestnetConfig.name,
     });
 
     // Test 4.1: Get block number
@@ -256,7 +264,16 @@ async function testEvmServiceConnection() {
     // Test 4.4: Test balance query (random address, should be 0 or valid)
     const testAddress = '0x0000000000000000000000000000000000000000';
     const balance = await provider.getBalance(testAddress);
-    success(`Balance query works (test address balance: ${ethers.formatEther(balance)} MON)`);
+    success(`Balance query works on Mainnet (test address balance: ${ethers.formatEther(balance)} MON)`);
+
+    // Test 4.5: Testnet Connection
+    const testnetBlock = await testnetProvider.getBlockNumber();
+    if (testnetBlock > 0) {
+      success(`Connected to Monad Testnet! Current block: ${testnetBlock}`);
+    } else {
+      error('Failed to connect to Monad Testnet');
+      return false;
+    }
 
     return true;
   } catch (e: any) {
@@ -310,6 +327,13 @@ async function testPaymentLinkValidation() {
       amount: 1.0,
     });
     success('Valid Monad payment link data - passed');
+
+    ChainValidator.validatePaymentLinkData({
+      chain: 'monad_testnet',
+      token: 'MON',
+      amount: 1.0,
+    });
+    success('Valid Monad Testnet payment link data - passed');
   } catch (e: any) {
     error(`Payment link validation failed: ${e.message}`);
     return false;

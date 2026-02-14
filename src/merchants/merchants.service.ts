@@ -64,6 +64,12 @@ export class MerchantService {
         isActive: true,
         label: 'Turnkey Wallet',
       });
+      wallets.push({
+        address: walletResponse.ethereumAddress,
+        chain: 'monad_testnet',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      });
     }
 
     const merchant = new this.merchantModel({
@@ -151,6 +157,12 @@ export class MerchantService {
       wallets.push({
         address: walletResponse.ethereumAddress,
         chain: 'monad',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      });
+      wallets.push({
+        address: walletResponse.ethereumAddress,
+        chain: 'monad_testnet',
         isActive: true,
         label: 'Turnkey Wallet',
       });
@@ -656,6 +668,7 @@ export class MerchantService {
 
     if (wallet.ethereumAddress) {
       ensureWallet('monad', wallet.ethereumAddress);
+      ensureWallet('monad_testnet', wallet.ethereumAddress);
     }
 
     if (changed) {

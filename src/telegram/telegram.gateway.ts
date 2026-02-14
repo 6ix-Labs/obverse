@@ -418,6 +418,8 @@ export class TelegramGateway implements OnModuleInit, OnModuleDestroy {
             await this.settingsHandler.startWebhookSetup(ctx);
           } else if (settingType === 'fields') {
             await this.settingsHandler.startDefaultFieldsSetup(ctx);
+          } else if (settingType === 'upgrade_wallet') {
+            await this.settingsHandler.handleWalletUpgrade(ctx);
           }
           return;
         }

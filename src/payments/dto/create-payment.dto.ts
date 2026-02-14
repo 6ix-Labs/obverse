@@ -29,11 +29,11 @@ export class CreatePaymentDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
-    enum: ['solana', 'monad'],
+    enum: ['solana', 'monad', 'monad_testnet'],
   })
   @IsString()
   @IsNotEmpty()
-  chain: string; // solana, monad
+  chain: string; // solana, monad, monad_testnet
 
   @ApiProperty({
     description: 'Amount paid',

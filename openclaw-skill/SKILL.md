@@ -170,9 +170,28 @@ obverse-cli list-contributors fund-xyz
 
 ### 3. 💳 **Simple Payments & Invoicing**
 
-Accept one-time payments or create invoices for clients.
+Accept one-time payments or create formal invoices with line items and auto-payment tracking.
 
 **Example: Consulting Invoice**
+
+```bash
+# Create an invoice with line items (auto-generates a payment link)
+obverse-cli create-invoice john@example.com '[{"description":"React development","quantity":2,"unitPrice":150},{"description":"Code review","quantity":1,"unitPrice":75}]' 14 USDC solana "John Smith" "Sprint 12 work"
+# Returns: invoice number (INV-001), payment URL, total ($375), due date
+
+# Check invoice status
+obverse-cli get-invoice <invoiceId>
+
+# List all invoices (filter by status: sent, paid, overdue, cancelled)
+obverse-cli list-invoices sent
+
+# Cancel an unpaid invoice
+obverse-cli cancel-invoice <invoiceId>
+```
+
+**Auto-payment tracking:** When the client pays via the invoice's payment link, the invoice automatically updates to "paid" — no manual action needed.
+
+**Or use simple payment links:**
 
 ```bash
 # Generic payment link (one-time use)
@@ -180,21 +199,11 @@ obverse-cli create-link 750 USDC solana "Consulting Services - 5 hours"
 
 # Check if paid
 obverse-cli check-payment xyz123
-
-# List all payments
-obverse-cli list-payments xyz123
-```
-
-**Or use formal invoicing:**
-
-```bash
-# Create invoice with recipient details
-obverse-cli create-invoice john@example.com 750 USDC monad
 ```
 
 **Perfect For:**
-- Freelance work
-- Professional services
+- Freelance work with detailed line items
+- Professional services billing
 - One-time payments
 - Tips and donations
 
@@ -281,8 +290,12 @@ obverse-cli create-product-link <title> <price> [currency] [chain] [description]
 # For crowdfunding (auto-collects optional email & name)
 obverse-cli create-fundraiser <title> <goalAmount> [currency] [chain] [description] [customFieldsJson]
 
-# For invoicing (formal)
-obverse-cli create-invoice <recipient> <amount> [currency] [chain] [dueDate]
+# For invoicing (formal, with line items & auto-payment tracking)
+obverse-cli create-invoice <email> <lineItemsJson> [dueDays] [currency] [chain] [name] [notes]
+# (Legacy support: obverse-cli create-invoice <recipient> <amount> [currency] [chain] [dueDate])
+obverse-cli get-invoice <invoiceId>
+obverse-cli list-invoices [status] [limit]
+obverse-cli cancel-invoice <invoiceId>
 ```
 
 ### Dashboard & Analytics

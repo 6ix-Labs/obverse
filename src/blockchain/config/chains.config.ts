@@ -3,6 +3,7 @@
 export enum ChainType {
   SOLANA = 'solana',
   MONAD = 'monad',
+  MONAD_TESTNET = 'monad_testnet',
 }
 
 export interface ChainConfig {
@@ -64,6 +65,21 @@ export const CHAINS: Record<string, ChainConfig> = {
     blockExplorerUrls: ['https://monadvision.com', 'https://monadscan.com'],
     isTestnet: false,
   },
+  monad_testnet: {
+    chainId: 10143,
+    chainType: ChainType.MONAD_TESTNET,
+    name: 'Monad Testnet',
+    nativeCurrency: {
+      name: 'Monad',
+      symbol: 'MON',
+      decimals: 18,
+    },
+    rpcUrls: [
+      process.env.MONAD_TESTNET_RPC_URL || 'https://testnet-rpc.monad.xyz',
+    ],
+    blockExplorerUrls: ['https://testnet.monadexplorer.com'],
+    isTestnet: true,
+  },
 };
 
 // Token configurations for each chain
@@ -110,6 +126,25 @@ export const TOKENS: Record<string, TokenConfig[]> = {
         process.env.MONAD_USDC_ADDRESS ||
         '0x754704bc059f8c67012fed69bc8a327a5aafb603',
       chain: ChainType.MONAD,
+      isNative: false,
+    },
+  ],
+  monad_testnet: [
+    {
+      symbol: 'MON',
+      name: 'Monad',
+      decimals: 18,
+      chain: ChainType.MONAD_TESTNET,
+      isNative: true,
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      decimals: 6,
+      address:
+        process.env.MONAD_TESTNET_USDC_ADDRESS ||
+        '0x0000000000000000000000000000000000000000', // Placeholder
+      chain: ChainType.MONAD_TESTNET,
       isNative: false,
     },
   ],

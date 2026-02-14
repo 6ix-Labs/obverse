@@ -13,6 +13,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
+import { InvoicesModule } from './invoices/invoices.module';
 import configuration from './config/configuration';
 import leanVirtuals from 'mongoose-lean-virtuals';
 
@@ -50,8 +51,9 @@ const config = configuration();
     AuthModule,
     DashboardModule,
     ApiKeysModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

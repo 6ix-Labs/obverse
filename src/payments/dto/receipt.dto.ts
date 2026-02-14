@@ -96,4 +96,16 @@ export class PaymentReceiptDto {
     example: { email: 'alice@example.com' },
   })
   customerData?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Invoice number if this payment is linked to an invoice',
+    example: 'INV-003',
+  })
+  invoiceNumber?: string;
+
+  @ApiPropertyOptional({
+    description: 'Merchant/business name',
+    example: 'Acme Corp',
+  })
+  merchantName?: string;
 }

@@ -236,7 +236,7 @@ export class BalanceResponseDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
-    enum: ['solana', 'monad'],
+    enum: ['solana', 'monad', 'monad_testnet'],
   })
   chain: string;
 

@@ -219,43 +219,133 @@ const commands = {
   },
 
   // Create invoice
-  'create-invoice': async (recipient, amount, currency = 'USDC', chain = 'solana', dueDate = null) => {
+  // Supports both new format: (email, lineItemsJson...) and legacy format: (recipient, amount...)
+  'create-invoice': async (arg1, arg2, arg3, arg4, arg5, arg6, arg7) => {
+    const recipientEmail = arg1;
+    let itemsJson = arg2;
+
+    // Check if we are in legacy mode (arg2 is a simple amount, not a JSON array)
+    let isLegacy = false;
+    try {
+      const parsed = JSON.parse(itemsJson);
+      if (!Array.isArray(parsed)) {
+        isLegacy = true;
+      }
+    } catch {
+      // If valid number, it's legacy amount. If not JSON and not number, it's invalid.
+      if (!isNaN(parseFloat(itemsJson))) {
+        isLegacy = true;
+      }
+    }
+
+    let lineItems;
+    let dueDays = 14;
+    let currency = 'USDC';
+    let chain = 'solana';
+    let recipientName = '';
+    let notes = '';
+
+    if (isLegacy) {
+      // Legacy signature: (recipient, amount, currency, chain, dueDate)
+      // Map arguments:
+      // arg1 = recipient
+      // arg2 = amount
+      // arg3 = currency (default: USDC)
+      // arg4 = chain (default: solana)
+      // arg5 = dueDate (default: null -> 30 days)
+
+      const amount = parseFloat(arg2);
+      if (isNaN(amount)) {
+        return { success: false, error: 'Invalid amount. For new format use JSON array: [{"description":...,"amount":...}]' };
+      }
+
+      currency = arg3 || 'USDC';
+      chain = arg4 || 'solana';
+      const dueDateStr = arg5; // Date string or null
+
+      lineItems = [{
+        description: 'Invoice Payment',
+        quantity: 1,
+        unitPrice: amount
+      }];
+
+      // Calculate dueDays from dueDate if present
+      if (dueDateStr) {
+        const due = new Date(dueDateStr);
+        const now = new Date();
+        if (!isNaN(due.getTime()) && due > now) {
+          const diffTime = Math.abs(due - now);
+          dueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        } else {
+          dueDays = 30; // Default legacy behavior
+        }
+      } else {
+        dueDays = 30; // Default legacy behavior
+      }
+
+      console.log(`[Compatibility Mode] using legacy invoice format: Amount ${amount} ${currency}`);
+    } else {
+      // New signature: (email, itemsJson, dueDays, currency, chain, name, notes)
+      try {
+        lineItems = JSON.parse(itemsJson);
+        if (!Array.isArray(lineItems) || lineItems.length === 0) {
+          return { success: false, error: 'lineItems must be a non-empty JSON array' };
+        }
+      } catch {
+        return { success: false, error: 'Invalid JSON for lineItems' };
+      }
+      dueDays = parseInt(arg3 || '14', 10);
+      currency = arg4 || 'USDC';
+      chain = arg5 || 'solana';
+      recipientName = arg6 || '';
+      notes = arg7 || '';
+    }
+
+    // Validation
     const chainValidation = validateAndNormalizeChain(chain);
     if (chainValidation.success === false) {
       return chainValidation;
     }
 
-    const effectiveDueDate =
-      dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const description = `Invoice for ${recipient} (due ${effectiveDueDate.split('T')[0]})`;
+    const result = await makeRequest('/invoices', {
+      method: 'POST',
+      body: JSON.stringify({
+        recipientEmail,
+        recipientName: recipientName || undefined,
+        lineItems,
+        dueDays,
+        token: currency,
+        chain: chainValidation.chain,
+        notes: notes || undefined,
+      })
+    });
 
-    // Invoice endpoint is not available in this API.
-    // Use a one-time payment link as a consistent fallback.
-    const linkResult = await commands['create-link'](
-      amount,
-      currency,
-      chainValidation.chain,
-      description,
-      null,
-      'false',
-    );
+    return result;
+  },
 
-    if (linkResult.success === false) {
-      return linkResult;
+  // Get invoice details
+  'get-invoice': async (invoiceId) => {
+    if (!invoiceId) {
+      return { success: false, error: 'Usage: get-invoice <invoiceId>' };
     }
+    return makeRequest(`/invoices/${invoiceId}`);
+  },
 
-    return {
-      invoiceId: null,
-      invoiceUrl: null,
-      paymentLink: linkResult.paymentUrl,
-      linkCode: linkResult.linkCode,
-      amount: parseFloat(amount),
-      currency,
-      chain: chainValidation.chain,
-      dueDate: effectiveDueDate,
-      recipient,
-      message: 'Invoice endpoint not available; created one-time payment link instead.',
-    };
+  // List invoices
+  'list-invoices': async (status = '', limit = '50') => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (limit) params.set('limit', limit);
+    const qs = params.toString();
+    return makeRequest(`/invoices${qs ? '?' + qs : ''}`);
+  },
+
+  // Cancel invoice
+  'cancel-invoice': async (invoiceId) => {
+    if (!invoiceId) {
+      return { success: false, error: 'Usage: cancel-invoice <invoiceId>' };
+    }
+    return makeRequest(`/invoices/${invoiceId}/cancel`, { method: 'PATCH' });
   },
 
   // Submit payment
@@ -580,7 +670,10 @@ const commands = {
         'check-payment <paymentId>': 'Check payment link status',
         'list-payments <linkCode> [limit]': 'List all payments for a payment link',
         'balance <userId> [chain]': 'Get wallet balance',
-        'create-invoice <recipient> <amount> [currency] [chain] [dueDate]': 'Create an invoice',
+        'create-invoice <email> <lineItemsJson> ...': 'Create an invoice (supports legacy: <recipient> <amount> ...)',
+        'get-invoice <invoiceId>': 'Get invoice details',
+        'list-invoices [status] [limit]': 'List invoices (status: draft|sent|paid|overdue|cancelled)',
+        'cancel-invoice <invoiceId>': 'Cancel an invoice',
         'submit-payment <linkCode> <txSignature> <chain> <amount> <token> <from> <to> [email]': 'Submit a payment',
         'get-receipt <paymentId>': 'Get payment receipt by payment ID',
         'generate-qr <address> <amount> [currency] [chain]': 'Generate QR code for payment',
@@ -611,7 +704,9 @@ const commands = {
         'Check payment': 'obverse-cli check-payment pay_abc123',
         'List payments': 'obverse-cli list-payments x7k9m2 10',
         'Check balance': 'obverse-cli balance 123456789 solana',
-        'Create invoice': 'obverse-cli create-invoice john@example.com 100 USDC monad',
+        'Create invoice': 'obverse-cli create-invoice john@example.com \'[{"description":"React dev","quantity":2,"unitPrice":150}]\' 14 USDC solana "John Smith"',
+        'List invoices': 'obverse-cli list-invoices sent',
+        'Cancel invoice': 'obverse-cli cancel-invoice 507f1f77bcf86cd799439011',
         'Get receipt': 'obverse-cli get-receipt 507f1f77bcf86cd799439013',
         'Generate QR': 'obverse-cli generate-qr 0x742d35Cc... 50 USDC solana'
       },
@@ -621,7 +716,7 @@ const commands = {
         'Custom Data Collection': 'Use create-link with customFields JSON to collect ANY data you need (phone, address, company, etc.).',
         'Dashboard Analytics': 'Use generate-dashboard to get login credentials for viewing payment analytics, stats, and contributor details.',
         'Simple Payments': 'Use create-link for one-time payments, tips, or donations.',
-        'Invoicing': 'Use create-invoice for formal billing with recipient details.'
+        'Invoicing': 'Use create-invoice for formal billing with line items, auto-generated payment links, due dates, and auto-payment tracking.'
       },
       environment: {
         'OBVERSE_API_KEY': 'Your Obverse API key (required)',
@@ -637,7 +732,7 @@ const commands = {
  * Main execution
  */
 async function main() {
-  const [,, command, ...args] = process.argv;
+  const [, , command, ...args] = process.argv;
 
   if (!command || command === 'help' || command === '--help' || command === '-h') {
     const help = await commands.help();

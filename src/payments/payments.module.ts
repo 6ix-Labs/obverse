@@ -7,6 +7,7 @@ import { PaymentRepository } from './payments.repository';
 import { TransactionsModule } from 'src/transactions/transactions.module';
 import { PaymentLinksModule } from 'src/payment-links/payment-links.module';
 import { ApiKeysModule } from '../api-keys/api-keys.module';
+import { InvoicesModule } from '../invoices/invoices.module';
 
 @Module({
   imports: [
@@ -14,9 +15,10 @@ import { ApiKeysModule } from '../api-keys/api-keys.module';
     TransactionsModule,
     forwardRef(() => PaymentLinksModule),
     forwardRef(() => ApiKeysModule), // Import to use OptionalApiKeyGuard
+    forwardRef(() => InvoicesModule),
   ],
   providers: [PaymentsService, PaymentRepository],
   controllers: [PaymentsController],
   exports: [PaymentsService, PaymentRepository],
 })
-export class PaymentsModule {}
+export class PaymentsModule { }
