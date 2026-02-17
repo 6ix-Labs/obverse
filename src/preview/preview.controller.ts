@@ -17,12 +17,12 @@ import {
 } from './dto/preview-params.dto';
 import { DashboardPreviewQueryDto } from './dto/dashboard-preview-query.dto';
 import { PreviewSigningService } from './preview-signing.service';
-import { PreviewLoggingInterceptor } from './preview-logging.interceptor.js';
-import { PreviewExceptionFilter } from './preview-exception.filter.js';
+import { PreviewLoggingInterceptor } from './preview-logging.interceptor';
+import { PreviewExceptionFilter } from './preview-exception.filter';
 import { PaymentLinksService } from '../payment-links/payment-links.service';
-import { PreviewError } from './types/preview.errors';
-import { PreviewErrorCode } from './types/preview.types';
+import { PreviewErrorCode, PreviewRenderResult } from './types/preview.types';
 import { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
 
 @ApiTags('preview')
 @Controller('preview')
@@ -42,8 +42,8 @@ export class PreviewController {
     @ApiProduces('image/png')
     async getLinkPreview(
         @Param() params: LinkPreviewParamsDto,
-        @Req() req: any,
-        @Res() res: any,
+        @Req() req: Request,
+        @Res() res: Response,
     ): Promise<void> {
         const result = await this.previewService.renderLinkPreview(params.linkCode);
         this.sendResult(req, res, result, 'link', params.linkCode);
@@ -55,8 +55,8 @@ export class PreviewController {
     @ApiProduces('image/png')
     async getReceiptPreview(
         @Param() params: ReceiptPreviewParamsDto,
-        @Req() req: any,
-        @Res() res: any,
+        @Req() req: Request,
+        @Res() res: Response,
     ): Promise<void> {
         const result = await this.previewService.renderReceiptPreview(
             params.paymentId,
@@ -71,8 +71,8 @@ export class PreviewController {
     async getDashboardPreview(
         @Param() params: DashboardPreviewParamsDto,
         @Query() query: DashboardPreviewQueryDto,
-        @Req() req: any,
-        @Res() res: any,
+        @Req() req: Request,
+        @Res() res: Response,
     ): Promise<void> {
         const requireSignature = this.signingService.requireDashboardSignature();
         const expires = query.expires;
@@ -171,13 +171,13 @@ export class PreviewController {
     }
 
     private sendResult(
-        req: any,
-        res: any,
-        result: any,
+        req: Request,
+        res: Response,
+        result: PreviewRenderResult,
         previewType: string,
         resourceId: string,
     ): void {
-        const ifNoneMatch = req.headers['if-none-match'];
+        const ifNoneMatch = req.get('if-none-match');
         const cacheHit = ifNoneMatch && ifNoneMatch === result.etag;
 
         res.setHeader('Content-Type', 'image/png');

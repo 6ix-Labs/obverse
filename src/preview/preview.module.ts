@@ -8,21 +8,21 @@ import { PreviewImageAdapter } from './adapters/preview-image.adapter';
 import { PreviewSigningService } from './preview-signing.service';
 import { PaymentLinksModule } from '../payment-links/payment-links.module';
 import { PaymentsModule } from '../payments/payments.module';
-import { PreviewExceptionFilter } from './preview-exception.filter.js';
-import { PreviewLoggingInterceptor } from './preview-logging.interceptor.js';
+import { PreviewExceptionFilter } from './preview-exception.filter';
+import { PreviewLoggingInterceptor } from './preview-logging.interceptor';
 
 @Module({
-    imports: [ConfigModule, PaymentLinksModule, PaymentsModule],
-    controllers: [PreviewController],
-    providers: [
-        PreviewService,
-        PreviewDataService,
-        PreviewTemplateService,
-        PreviewImageAdapter,
-        PreviewSigningService,
-        PreviewExceptionFilter,
-        PreviewLoggingInterceptor,
-    ],
-    exports: [PreviewSigningService, PreviewService],
+  imports: [ConfigModule, PaymentLinksModule, PaymentsModule],
+  controllers: [PreviewController],
+  providers: [
+    PreviewService,
+    PreviewDataService,
+    PreviewTemplateService,
+    PreviewImageAdapter,
+    PreviewSigningService,
+    PreviewExceptionFilter,
+    PreviewLoggingInterceptor,
+  ],
+  exports: [PreviewSigningService, PreviewService],
 })
-export class PreviewModule { }
+export class PreviewModule {}
