@@ -21,7 +21,7 @@ export class MerchantService {
     private readonly walletService: WalletService,
     @Inject(WALLET_REPOSITORY)
     private readonly walletRepository: IWalletRepository,
-  ) { }
+  ) {}
 
   /**
    * Create merchant with Turnkey wallet on /start

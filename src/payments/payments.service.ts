@@ -17,6 +17,7 @@ import { TransactionType } from 'src/transactions/schemas/transaction.schema';
 import { PaymentLinksService } from 'src/payment-links/payment-links.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentReceiptDto } from './dto/receipt.dto';
+import { computeReceiptPreviewVersion } from '../common/utils/preview-cache.util';
 
 @Injectable()
 export class PaymentsService {
@@ -239,6 +240,86 @@ export class PaymentsService {
     return this.paymentModel
       .find({ paymentLinkId: paymentLinkId })
       .sort({ createdAt: -1 });
+  }
+
+  async findById(paymentId: string): Promise<PaymentDocument> {
+    if (!paymentId || paymentId.trim().length === 0) {
+      throw new BadRequestException('Payment ID is required');
+    }
+
+    if (!Types.ObjectId.isValid(paymentId)) {
+      throw new BadRequestException('Invalid payment ID format');
+    }
+
+    const payment = await this.paymentModel.findById(paymentId).exec();
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+    return payment;
+  }
+
+  async getPaymentLinkStats(
+    paymentLinkId: string,
+    filters?: { startDate?: Date; endDate?: Date },
+  ): Promise<{
+    totalVolume: number;
+    successfulCount: number;
+    pendingCount: number;
+    failedCount: number;
+    updatedAt?: Date;
+  }> {
+    const match: any = { paymentLinkId: paymentLinkId };
+    if (filters?.startDate || filters?.endDate) {
+      match.createdAt = {};
+      if (filters.startDate) {
+        match.createdAt.$gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        match.createdAt.$lte = filters.endDate;
+      }
+    }
+
+    const results = await this.paymentModel.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$amount' },
+          lastUpdated: { $max: '$updatedAt' },
+        },
+      },
+    ]);
+
+    const stats = results.reduce(
+      (acc, item) => {
+        if (item._id === PaymentStatus.CONFIRMED) {
+          acc.totalVolume = item.totalAmount || 0;
+          acc.successfulCount = item.count || 0;
+        }
+        if (item._id === PaymentStatus.PENDING) {
+          acc.pendingCount = item.count || 0;
+        }
+        if (item._id === PaymentStatus.FAILED) {
+          acc.failedCount = item.count || 0;
+        }
+        if (item.lastUpdated) {
+          if (!acc.updatedAt || item.lastUpdated > acc.updatedAt) {
+            acc.updatedAt = item.lastUpdated;
+          }
+        }
+        return acc;
+      },
+      {
+        totalVolume: 0,
+        successfulCount: 0,
+        pendingCount: 0,
+        failedCount: 0,
+        updatedAt: undefined as Date | undefined,
+      },
+    );
+
+    return stats;
   }
 
   /**
@@ -509,6 +590,10 @@ export class PaymentsService {
     const explorerBase =
       chain === 'solana' ? 'https://solscan.io/tx' : 'https://monadscan.com/tx';
 
+    const previewBaseUrl =
+      process.env.PREVIEW_BASE_URL || process.env.APP_URL || '';
+    const previewVersion = this.getReceiptPreviewVersion(payment);
+
     return {
       receiptId: payment._id.toString(),
       paymentId: payment._id.toString(),
@@ -523,9 +608,27 @@ export class PaymentsService {
       isConfirmed: payment.status === PaymentStatus.CONFIRMED,
       confirmedAt: payment.confirmedAt,
       createdAt: payment.createdAt,
-      dashboardUrl: process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
+      dashboardUrl:
+        process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
       explorerUrl: `${explorerBase}/${payment.txSignature}`,
       customerData: payment.customerData,
+      previewImageUrl: previewBaseUrl
+        ? `${previewBaseUrl.replace(/\/$/, '')}/preview/receipt/${payment._id.toString()}?v=${previewVersion}`
+        : undefined,
     };
+  }
+
+  getReceiptPreviewVersion(
+    payment: Pick<
+      PaymentDocument,
+      'status' | 'updatedAt' | 'confirmedAt' | 'createdAt'
+    >,
+  ): string {
+    return computeReceiptPreviewVersion({
+      status: payment.status,
+      updatedAt: payment.updatedAt,
+      confirmedAt: payment.confirmedAt,
+      createdAt: payment.createdAt,
+    });
   }
 }

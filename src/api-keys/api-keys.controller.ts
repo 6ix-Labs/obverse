@@ -29,7 +29,7 @@ export class ApiKeysController {
   constructor(
     private readonly apiKeysService: ApiKeysService,
     private readonly merchantService: MerchantService,
-  ) { }
+  ) {}
 
   /**
    * POST /api-keys/create
@@ -183,8 +183,7 @@ export class ApiKeysController {
         },
         chain: {
           type: 'string',
-          description:
-            'Blockchain for the wallet (default: solana)',
+          description: 'Blockchain for the wallet (default: solana)',
           example: 'solana',
           default: 'solana',
         },
@@ -213,8 +212,7 @@ export class ApiKeysController {
           name: 'my-discord-bot API Key',
         },
         key: 'obv_sk_1a2b3c4d...',
-        message:
-          '⚠️ Save this key securely! It will not be shown again.',
+        message: '⚠️ Save this key securely! It will not be shown again.',
       },
     },
   })
@@ -236,12 +234,13 @@ export class ApiKeysController {
     }
 
     // Create merchant (with or without wallet)
-    const { merchant, wallet } =
-      await this.merchantService.createAgentMerchant({
+    const { merchant, wallet } = await this.merchantService.createAgentMerchant(
+      {
         username: body.username.trim(),
         walletAddress: body.walletAddress,
         chain: body.chain,
-      });
+      },
+    );
 
     // Generate API key
     const keyName = body.keyName || `${body.username.trim()} API Key`;

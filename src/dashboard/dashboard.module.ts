@@ -5,6 +5,7 @@ import { PaymentLinksModule } from '../payment-links/payment-links.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { AuthModule } from '../auth/auth.module';
+import { PreviewModule } from '../preview/preview.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AuthModule } from '../auth/auth.module';
     PaymentLinksModule,
     TransactionsModule,
     PaymentsModule,
+    PreviewModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService],

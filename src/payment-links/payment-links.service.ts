@@ -139,7 +139,10 @@ export class PaymentLinksService {
 
       const link = await this.paymentLinkModel
         .findOne({ linkId, isActive: true })
-        .populate('merchantId', 'walletAddress wallets');
+        .populate(
+          'merchantId',
+          'walletAddress wallets username firstName lastName',
+        );
 
       if (!link) {
         this.logger.warn(`Payment link not found: ${linkId}`);

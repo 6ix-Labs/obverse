@@ -8,7 +8,8 @@ export class OGTemplateService {
 
     const title = `Payment Request: ${amount} ${token}`;
     const pageDescription = description || `Pay ${amount} ${token} on ${chain}`;
-    const imageUrl = `${baseUrl}/payment-links/${linkId}/og-image`;
+    const previewBaseUrl = process.env.PREVIEW_BASE_URL || baseUrl;
+    const imageUrl = `${previewBaseUrl}/preview/link/${linkId}`;
     const pageUrl = `${baseUrl}/payment-links/${linkId}`;
 
     return `

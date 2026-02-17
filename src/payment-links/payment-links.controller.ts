@@ -322,6 +322,9 @@ export class PaymentLinksController {
       // Get base URL for constructing payment URL
       const baseUrl = process.env.PAYMENT_URL || 'https://pay.obverse.app';
       const paymentUrl = `${baseUrl}/${paymentLink.linkId}`;
+      const previewBaseUrl =
+        process.env.PREVIEW_BASE_URL || this.getBaseUrl(req);
+      const previewImageUrl = `${previewBaseUrl.replace(/\/$/, '')}/preview/link/${paymentLink.linkId}`;
 
       this.logger.log(
         `Payment link created successfully: ${paymentLink.linkId}`,
@@ -332,6 +335,7 @@ export class PaymentLinksController {
         paymentUrl,
         currency: paymentLink.token,
         walletAddress: paymentLink.recipientWalletAddress,
+        previewImageUrl,
       };
     } catch (error) {
       this.logger.error(
@@ -486,6 +490,7 @@ export class PaymentLinksController {
   ): Record<string, any> {
     const link = paymentLink?.toObject ? paymentLink.toObject() : paymentLink;
     const baseUrl = process.env.PAYMENT_URL || `${this.getBaseUrl(req)}/pay`;
+    const previewBaseUrl = process.env.PREVIEW_BASE_URL || this.getBaseUrl(req);
 
     // Backward-compatible aliases expected by some clients (including OpenClaw skill)
     const walletAddress =
@@ -498,6 +503,7 @@ export class PaymentLinksController {
       paymentUrl: `${baseUrl.replace(/\/$/, '')}/${link.linkId}`,
       currency: link.token,
       walletAddress,
+      previewImageUrl: `${previewBaseUrl.replace(/\/$/, '')}/preview/link/${link.linkId}`,
     };
   }
 }
