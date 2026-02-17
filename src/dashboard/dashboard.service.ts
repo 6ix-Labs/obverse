@@ -1,8 +1,10 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PaymentLinksService } from '../payment-links/payment-links.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { PaymentsService } from '../payments/payments.service';
 import { PaymentStatus } from '../payments/schemas/payments.schema';
+import { PreviewSigningService } from '../preview/preview-signing.service';
 
 @Injectable()
 export class DashboardService {
@@ -12,6 +14,8 @@ export class DashboardService {
     private paymentLinksService: PaymentLinksService,
     private transactionsService: TransactionsService,
     private paymentsService: PaymentsService,
+    private previewSigningService: PreviewSigningService,
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -60,6 +64,21 @@ export class DashboardService {
         ? ((confirmedPayments / totalPayments) * 100).toFixed(2)
         : 0;
 
+    const previewBaseUrl =
+      this.configService.get<string>('preview.baseUrl') ||
+      process.env.APP_URL ||
+      'https://www.obverse.cc';
+    const expires =
+      Math.floor(Date.now() / 1000) +
+      this.previewSigningService.getSignatureMaxTtlSeconds();
+    const dashboardPath = `/preview/dashboard/${link._id.toString()}`;
+    const signature = this.previewSigningService.getDashboardSignature(
+      dashboardPath,
+      expires,
+      link.merchantId.toString(),
+    );
+    const dashboardPreviewImageUrl = `${previewBaseUrl.replace(/\/$/, '')}${dashboardPath}?expires=${expires}&signature=${signature}`;
+
     return {
       paymentLink: {
         linkId: link.linkId,
@@ -70,6 +89,10 @@ export class DashboardService {
         isActive: link.isActive,
         isReusable: link.isReusable,
         createdAt: link.createdAt,
+        previewImageUrl: `${previewBaseUrl.replace(/\/$/, '')}/preview/link/${link.linkId}`,
+      },
+      dashboard: {
+        previewImageUrl: dashboardPreviewImageUrl,
       },
       stats: {
         totalPayments,

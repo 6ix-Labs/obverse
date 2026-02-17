@@ -20,6 +20,7 @@ import { PaymentsService } from './payments.service';
 import { PaymentDocument } from './schemas/payments.schema';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentReceiptDto } from './dto/receipt.dto';
+import { computeReceiptPreviewVersion } from '../common/utils/preview-cache.util';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -109,12 +110,27 @@ export class PaymentsController {
           isConfirmed: payment.status === 'confirmed',
           confirmedAt: payment.confirmedAt,
           createdAt: payment.createdAt,
-          dashboardUrl: process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
+          dashboardUrl:
+            process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
           explorerUrl:
             payment.chain?.toLowerCase() === 'solana'
               ? `https://solscan.io/tx/${payment.txSignature}`
               : `https://monadscan.com/tx/${payment.txSignature}`,
           customerData: payment.customerData,
+          previewImageUrl: (() => {
+            const previewBaseUrl =
+              process.env.PREVIEW_BASE_URL || process.env.APP_URL || '';
+            if (!previewBaseUrl) {
+              return undefined;
+            }
+            const version = computeReceiptPreviewVersion({
+              status: payment.status,
+              updatedAt: payment.updatedAt,
+              confirmedAt: payment.confirmedAt,
+              createdAt: payment.createdAt,
+            });
+            return `${previewBaseUrl.replace(/\/$/, '')}/preview/receipt/${payment._id.toString()}?v=${version}`;
+          })(),
         };
       }
 

@@ -96,4 +96,10 @@ export class PaymentReceiptDto {
     example: { email: 'alice@example.com' },
   })
   customerData?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Preview image URL for social sharing',
+    example: 'https://api.obverse.cc/preview/receipt/507f1f77bcf86cd799439013',
+  })
+  previewImageUrl?: string;
 }

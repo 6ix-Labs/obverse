@@ -127,4 +127,11 @@ export class PaymentLinkResponseDto {
     example: '2024-01-15T10:30:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Preview image URL for social sharing',
+    example: 'https://api.obverse.cc/preview/link/x7k9m2',
+    required: false,
+  })
+  previewImageUrl?: string;
 }
