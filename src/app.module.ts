@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { PreviewModule } from './preview/preview.module';
+import { ShareModule } from './share/share.module';
 import configuration from './config/configuration';
 import leanVirtuals from 'mongoose-lean-virtuals';
 
@@ -52,8 +53,9 @@ const config = configuration();
     DashboardModule,
     ApiKeysModule,
     PreviewModule,
+    ShareModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
