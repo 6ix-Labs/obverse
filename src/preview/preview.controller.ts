@@ -121,6 +121,17 @@ export class PreviewController {
         this.sendResult(req, res, result, 'dashboard', params.dashboardId);
     }
 
+    @Get('fallback')
+    @ApiOperation({ summary: 'Get fallback preview image' })
+    @ApiProduces('image/png')
+    async getFallbackPreview(
+        @Req() req: Request,
+        @Res() res: Response,
+    ): Promise<void> {
+        const result = await this.previewService.renderFallbackImage();
+        this.sendResult(req, res, result, 'fallback', 'global');
+    }
+
     private validateSignature(
         path: string,
         expires: number | undefined,

@@ -6,6 +6,23 @@
 - `GET /preview/receipt/:paymentId`
 - `GET /preview/dashboard/:dashboardId`
 
+### Crawler-friendly share HTML endpoints
+
+- `GET /share/payment/:linkCode`
+- `GET /share/receipt/:paymentId`
+- `GET /share/dashboard/:dashboardId`
+
+These routes return server-rendered HTML (not JSON) with OG/Twitter tags in the initial response. They also include instant human redirect behavior:
+
+- `<meta http-equiv="refresh" ...>`
+- `window.location.replace(...)`
+
+Redirect targets:
+
+- payment → `/pay/:linkCode`
+- receipt → `/receipt/:paymentId`
+- dashboard → `/dashboard`
+
 All endpoints return `image/png` (`1200x630`).
 
 ### Cache headers
@@ -47,6 +64,11 @@ Recommended fields from API responses:
 - `paymentLink.previewImageUrl`
 - `receipt.previewImageUrl`
 - `dashboard.previewImageUrl`
+
+For share routes, the backend resolves these tags directly from canonical entities and sends them in raw HTML before JS execution.
+
+- `og:image` and `twitter:image` always use backend preview URLs
+- dashboard share image URL is signed by backend (frontend must never sign)
 
 ## Vite integration snippets
 
@@ -167,8 +189,28 @@ For reliable OG/Twitter previews, serve SSR/prerendered HTML or a backend HTML s
 
 `curl -i "https://api.obverse.cc/preview/dashboard/507f1f77bcf86cd799439012?expires=1760730000&signature=<hmac>"`
 
+### Share page (payment)
+
+`curl -i "https://api.obverse.cc/share/payment/x7k9m2"`
+
+### Share page (receipt)
+
+`curl -i "https://api.obverse.cc/share/receipt/507f1f77bcf86cd799439013"`
+
+### Share page (dashboard)
+
+`curl -i "https://api.obverse.cc/share/dashboard/507f1f77bcf86cd799439012"`
+
+## Validation steps (WhatsApp / Facebook)
+
+1. Share any `/share/payment/...`, `/share/receipt/...`, or `/share/dashboard/...` URL in WhatsApp.
+2. Confirm preview shows expected title, description, and image.
+3. Use Facebook Sharing Debugger on the same URL to force recrawl and inspect OG tags.
+4. Confirm `og:image` returns `200` and `Content-Type: image/png`.
+
 ## Notes
 
 - Missing resources return branded PNG not-found images.
 - Rendering errors return branded PNG fallback images by default.
 - No PII/private notes are included in preview template mapping.
+- Missing share entities return `404` HTML pages with fallback OG tags/images.
