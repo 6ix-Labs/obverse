@@ -15,13 +15,16 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DashboardService } from './dashboard.service';
+import { getSupportedChains } from '../blockchain/config/chains.config';
+
+const SUPPORTED_CHAINS = getSupportedChains();
 
 @ApiTags('dashboard')
 @ApiBearerAuth('JWT-auth')
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard) // Protect all routes - requires valid JWT
 export class DashboardController {
-  constructor(private dashboardService: DashboardService) {}
+  constructor(private dashboardService: DashboardService) { }
 
   /**
    * GET /dashboard/overview
@@ -106,7 +109,7 @@ export class DashboardController {
     type: String,
     description: 'Filter by blockchain chain',
     example: 'solana',
-    enum: ['solana', 'ethereum', 'base', 'polygon', 'arbitrum'],
+    enum: SUPPORTED_CHAINS,
   })
   @ApiQuery({
     name: 'startDate',

@@ -21,7 +21,7 @@ export class MerchantService {
     private readonly walletService: WalletService,
     @Inject(WALLET_REPOSITORY)
     private readonly walletRepository: IWalletRepository,
-  ) {}
+  ) { }
 
   /**
    * Create merchant with Turnkey wallet on /start
@@ -61,6 +61,12 @@ export class MerchantService {
       wallets.push({
         address: walletResponse.ethereumAddress,
         chain: 'monad',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      });
+      wallets.push({
+        address: walletResponse.ethereumAddress,
+        chain: 'base',
         isActive: true,
         label: 'Turnkey Wallet',
       });
@@ -151,6 +157,12 @@ export class MerchantService {
       wallets.push({
         address: walletResponse.ethereumAddress,
         chain: 'monad',
+        isActive: true,
+        label: 'Turnkey Wallet',
+      });
+      wallets.push({
+        address: walletResponse.ethereumAddress,
+        chain: 'base',
         isActive: true,
         label: 'Turnkey Wallet',
       });
@@ -656,6 +668,7 @@ export class MerchantService {
 
     if (wallet.ethereumAddress) {
       ensureWallet('monad', wallet.ethereumAddress);
+      ensureWallet('base', wallet.ethereumAddress);
     }
 
     if (changed) {

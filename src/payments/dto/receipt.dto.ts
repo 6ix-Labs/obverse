@@ -87,7 +87,7 @@ export class PaymentReceiptDto {
 
   @ApiProperty({
     description: 'Blockchain explorer URL for the transaction',
-    example: 'https://monadscan.com/tx/0xabc123...',
+    example: 'https://basescan.org/tx/0xabc123...',
   })
   explorerUrl: string;
 

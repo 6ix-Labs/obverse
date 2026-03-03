@@ -9,6 +9,9 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { getSupportedChains } from 'src/blockchain/config/chains.config';
+
+const SUPPORTED_CHAINS = getSupportedChains();
 
 export class CustomFieldDto {
   @ApiProperty({
@@ -58,7 +61,7 @@ export class CreatePaymentLinkDto {
 
   @ApiProperty({
     description: 'Blockchain chain',
-    enum: ['solana', 'monad'],
+    enum: SUPPORTED_CHAINS,
     example: 'monad',
     default: 'solana',
   })

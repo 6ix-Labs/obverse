@@ -8,6 +8,9 @@ import {
   IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { getSupportedChains } from 'src/blockchain/config/chains.config';
+
+const SUPPORTED_CHAINS = getSupportedChains();
 
 export class CreatePaymentDto {
   @ApiProperty({
@@ -29,11 +32,11 @@ export class CreatePaymentDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
-    enum: ['solana', 'monad'],
+    enum: SUPPORTED_CHAINS,
   })
   @IsString()
   @IsNotEmpty()
-  chain: string; // solana, monad
+  chain: string; // solana, monad, base
 
   @ApiProperty({
     description: 'Amount paid',

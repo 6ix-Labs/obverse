@@ -46,7 +46,7 @@ export class PaymentLinksController {
     private readonly ogImageService: OGImageService,
     private readonly ogTemplateService: OGTemplateService,
     private readonly dashboardAuthService: DashboardAuthService,
-  ) {}
+  ) { }
 
   @Get(':linkCode/og-image')
   @Header('Content-Type', 'image/png')
@@ -306,17 +306,28 @@ export class PaymentLinksController {
         }),
       );
 
+      const resolvedChain = (createPaymentLinkDto.chain || 'solana').toLowerCase();
+      const resolvedRecipientWalletAddress =
+        createPaymentLinkDto.recipientWalletAddress ||
+        this.resolveMerchantWalletAddress(merchant, resolvedChain);
+
+      if (!resolvedRecipientWalletAddress) {
+        throw new BadRequestException(
+          `No active recipient wallet configured for chain ${resolvedChain}`,
+        );
+      }
+
       // Create payment link with custom fields
       const paymentLink = await this.paymentLinksService.createPaymentLink({
         merchantId: merchant._id.toString(),
         amount: createPaymentLinkDto.amount,
         token: createPaymentLinkDto.token || 'USDC',
-        chain: createPaymentLinkDto.chain || 'solana',
+        chain: resolvedChain,
         description: createPaymentLinkDto.description,
         customFields,
         isReusable: createPaymentLinkDto.isReusable ?? false,
         expiresAt,
-        recipientWalletAddress: createPaymentLinkDto.recipientWalletAddress,
+        recipientWalletAddress: resolvedRecipientWalletAddress,
       });
 
       // Get base URL for constructing payment URL
@@ -496,6 +507,7 @@ export class PaymentLinksController {
     const walletAddress =
       link.recipientWalletAddress ||
       link.walletAddress ||
+      this.resolveMerchantWalletAddress(link?.merchantId, link?.chain) ||
       link?.merchantId?.walletAddress;
 
     return {
@@ -505,5 +517,47 @@ export class PaymentLinksController {
       walletAddress,
       previewImageUrl: `${previewBaseUrl.replace(/\/$/, '')}/preview/link/${link.linkId}`,
     };
+  }
+
+  private resolveMerchantWalletAddress(
+    merchant: any,
+    chain?: string,
+  ): string | undefined {
+    const wallets = Array.isArray(merchant?.wallets) ? merchant.wallets : [];
+    const targetChain = (chain || '').toLowerCase();
+
+    const findByChain = (chainName: string): string | undefined => {
+      const wallet = wallets.find(
+        (entry: any) =>
+          entry?.address &&
+          (entry?.chain || '').toLowerCase() === chainName &&
+          entry?.isActive !== false,
+      );
+      return wallet?.address;
+    };
+
+    if (targetChain) {
+      const exact = findByChain(targetChain);
+      if (exact) {
+        return exact;
+      }
+
+      // EVM wallet fallback: allow Base/Monad sharing same address if one is missing.
+      if (targetChain === 'base') {
+        const monadWallet = findByChain('monad');
+        if (monadWallet) {
+          return monadWallet;
+        }
+      }
+
+      if (targetChain === 'monad') {
+        const baseWallet = findByChain('base');
+        if (baseWallet) {
+          return baseWallet;
+        }
+      }
+    }
+
+    return merchant?.walletAddress;
   }
 }

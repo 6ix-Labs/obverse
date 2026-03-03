@@ -18,6 +18,7 @@ import { PaymentLinksService } from 'src/payment-links/payment-links.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentReceiptDto } from './dto/receipt.dto';
 import { computeReceiptPreviewVersion } from '../common/utils/preview-cache.util';
+import { getTransactionExplorerUrl } from 'src/blockchain/config/chains.config';
 
 @Injectable()
 export class PaymentsService {
@@ -27,7 +28,7 @@ export class PaymentsService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     private transactionsService: TransactionsService,
     private paymentLinksService: PaymentLinksService,
-  ) {}
+  ) { }
 
   /**
    * Create payment from frontend after blockchain transaction
@@ -40,6 +41,7 @@ export class PaymentsService {
     const paymentLink = await this.paymentLinksService.findByLinkIdWithMerchant(
       dto.linkCode,
     );
+    const resolvedChain = paymentLink.chain.toLowerCase();
 
     // 2. Validate the payment amount matches the link
     if (dto.amount < paymentLink.amount) {
@@ -56,9 +58,9 @@ export class PaymentsService {
     }
 
     // 4. Validate the chain matches
-    if (dto.chain.toLowerCase() !== paymentLink.chain.toLowerCase()) {
+    if (dto.chain.toLowerCase() !== resolvedChain) {
       throw new BadRequestException(
-        `Payment chain (${dto.chain}) does not match required chain (${paymentLink.chain})`,
+        `Payment chain (${dto.chain}) does not match required chain (${resolvedChain})`,
       );
     }
 
@@ -80,7 +82,7 @@ export class PaymentsService {
         paymentLinkId: paymentLink._id.toString(),
         merchantId: merchantId,
         txSignature: dto.txSignature,
-        chain: dto.chain,
+        chain: resolvedChain,
         amount: dto.amount,
         token: dto.token,
         tokenMintAddress: dto.tokenMintAddress,
@@ -94,12 +96,12 @@ export class PaymentsService {
       // Handle duplicate key error from MongoDB unique index
       if (error.code === 11000 || error.name === 'MongoServerError') {
         this.logger.warn(
-          `Duplicate payment attempt for tx ${dto.txSignature} on chain ${dto.chain}`,
+          `Duplicate payment attempt for tx ${dto.txSignature} on chain ${resolvedChain}`,
         );
         // Return the existing payment instead of throwing error
         const existingPayment = await this.findByTxSignature(
           dto.txSignature,
-          dto.chain,
+          resolvedChain,
         );
         if (existingPayment) {
           return existingPayment;
@@ -122,7 +124,7 @@ export class PaymentsService {
         await this.transactionsService.confirmTransaction(
           dto.txSignature,
           confirmations,
-          dto.chain,
+          resolvedChain,
           new Date(),
         );
       } catch (error) {
@@ -587,8 +589,7 @@ export class PaymentsService {
     );
 
     const chain = String(payment.chain || '').toLowerCase();
-    const explorerBase =
-      chain === 'solana' ? 'https://solscan.io/tx' : 'https://monadscan.com/tx';
+    const explorerUrl = getTransactionExplorerUrl(chain, payment.txSignature);
 
     const previewBaseUrl =
       process.env.PREVIEW_BASE_URL || process.env.APP_URL || '';
@@ -610,7 +611,7 @@ export class PaymentsService {
       createdAt: payment.createdAt,
       dashboardUrl:
         process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
-      explorerUrl: `${explorerBase}/${payment.txSignature}`,
+      explorerUrl,
       customerData: payment.customerData,
       previewImageUrl: previewBaseUrl
         ? `${previewBaseUrl.replace(/\/$/, '')}/preview/receipt/${payment._id.toString()}?v=${previewVersion}`

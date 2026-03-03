@@ -3,6 +3,7 @@
 export enum ChainType {
   SOLANA = 'solana',
   MONAD = 'monad',
+  BASE = 'base',
 }
 
 export interface ChainConfig {
@@ -17,6 +18,7 @@ export interface ChainConfig {
   rpcUrls: string[];
   wsUrls?: string[];
   blockExplorerUrls: string[];
+  transactionExplorerUrl?: string;
   isTestnet: boolean;
 }
 
@@ -43,6 +45,7 @@ export const CHAINS: Record<string, ChainConfig> = {
       process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
     ],
     blockExplorerUrls: ['https://solscan.io'],
+    transactionExplorerUrl: 'https://solscan.io/tx',
     isTestnet: false,
   },
   monad: {
@@ -62,6 +65,26 @@ export const CHAINS: Record<string, ChainConfig> = {
     ],
     wsUrls: ['wss://rpc.monad.xyz'],
     blockExplorerUrls: ['https://monadvision.com', 'https://monadscan.com'],
+    transactionExplorerUrl: 'https://monadscan.com/tx',
+    isTestnet: false,
+  },
+  base: {
+    chainId: 8453,
+    chainType: ChainType.BASE,
+    name: 'Base Mainnet',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: [
+      process.env.BASE_RPC_URL || 'https://mainnet.base.org',
+      'https://base-rpc.publicnode.com',
+      'https://base.llamarpc.com',
+    ],
+    wsUrls: [process.env.BASE_WS_URL || 'wss://base-rpc.publicnode.com'],
+    blockExplorerUrls: ['https://basescan.org', 'https://base.blockscout.com'],
+    transactionExplorerUrl: 'https://basescan.org/tx',
     isTestnet: false,
   },
 };
@@ -110,6 +133,26 @@ export const TOKENS: Record<string, TokenConfig[]> = {
         process.env.MONAD_USDC_ADDRESS ||
         '0x754704bc059f8c67012fed69bc8a327a5aafb603',
       chain: ChainType.MONAD,
+      isNative: false,
+    },
+  ],
+  base: [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      decimals: 18,
+      chain: ChainType.BASE,
+      isNative: true,
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      decimals: 6,
+      // Official Circle USDC on Base Mainnet
+      address:
+        process.env.BASE_USDC_ADDRESS ||
+        '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      chain: ChainType.BASE,
       isNative: false,
     },
   ],
@@ -167,4 +210,15 @@ export function isTokenSupported(chain: string, token: string): boolean {
   return chainTokens.some(
     (t) => t.symbol.toLowerCase() === token.toLowerCase(),
   );
+}
+
+export function getTransactionExplorerUrl(
+  chain: string,
+  txHash: string,
+): string {
+  const config = getChainConfig(chain);
+  const configuredBase = config.transactionExplorerUrl;
+  const fallbackBase = `${config.blockExplorerUrls[0].replace(/\/$/, '')}/tx`;
+  const explorerBase = (configuredBase || fallbackBase).replace(/\/$/, '');
+  return `${explorerBase}/${txHash}`;
 }

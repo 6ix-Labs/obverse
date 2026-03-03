@@ -1,4 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { getSupportedChains } from 'src/blockchain/config/chains.config';
+
+const SUPPORTED_CHAINS = getSupportedChains();
 
 export class CustomFieldDto {
   @ApiProperty({
@@ -56,7 +59,7 @@ export class PaymentLinkResponseDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
-    enum: ['solana', 'monad'],
+    enum: SUPPORTED_CHAINS,
   })
   chain: string;
 

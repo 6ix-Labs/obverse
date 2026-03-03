@@ -24,7 +24,10 @@ import {
 } from '../dto/wallet.dto';
 import turnkeyConfig from '../config/turnkey.config';
 import { EvmService } from '../../blockchain/services/evm.service';
-import { isChainSupported } from '../../blockchain/config/chains.config';
+import {
+  isChainSupported,
+  getSupportedChains,
+} from '../../blockchain/config/chains.config';
 
 @Injectable()
 export class BalanceService {
@@ -63,8 +66,9 @@ export class BalanceService {
 
       // Validate chain is supported
       if (!isChainSupported(chain)) {
+        const supportedChains = getSupportedChains();
         throw new BadRequestException(
-          `Unsupported chain: ${chain}. Supported chains: solana, monad`,
+          `Unsupported chain: ${chain}. Supported chains: ${supportedChains.join(', ')}`,
         );
       }
 

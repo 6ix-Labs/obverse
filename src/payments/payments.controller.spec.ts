@@ -40,7 +40,7 @@ describe('PaymentsController', () => {
         txSignature: '0xabc123',
         amount: 50,
         token: 'USDC',
-        chain: 'monad',
+        chain: 'base',
         fromAddress: '0x1111111111111111111111111111111111111111',
         toAddress: '0x2222222222222222222222222222222222222222',
         status: 'confirmed',
@@ -48,7 +48,7 @@ describe('PaymentsController', () => {
         confirmedAt: new Date('2026-02-13T18:22:10.000Z'),
         createdAt: new Date('2026-02-13T18:20:15.000Z'),
         dashboardUrl: 'https://www.obverse.cc/dashboard',
-        explorerUrl: 'https://monadscan.com/tx/0xabc123',
+        explorerUrl: 'https://basescan.org/tx/0xabc123',
         customerData: { email: 'alice@example.com' },
       };
 

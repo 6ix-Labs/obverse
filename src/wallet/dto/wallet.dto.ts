@@ -2,6 +2,9 @@
 
 import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { getSupportedChains } from 'src/blockchain/config/chains.config';
+
+const SUPPORTED_CHAINS = getSupportedChains();
 
 export class CreateUserWalletDto {
   @ApiProperty({
@@ -145,7 +148,7 @@ export class GetBalanceDto {
 
   @ApiPropertyOptional({
     description: 'Blockchain chain (defaults to solana)',
-    enum: ['solana', 'monad'],
+    enum: SUPPORTED_CHAINS,
     example: 'solana',
   })
   @IsString()
@@ -236,7 +239,7 @@ export class BalanceResponseDto {
   @ApiProperty({
     description: 'Blockchain chain',
     example: 'solana',
-    enum: ['solana', 'monad'],
+    enum: SUPPORTED_CHAINS,
   })
   chain: string;
 

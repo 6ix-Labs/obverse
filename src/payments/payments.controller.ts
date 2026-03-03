@@ -21,13 +21,14 @@ import { PaymentDocument } from './schemas/payments.schema';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentReceiptDto } from './dto/receipt.dto';
 import { computeReceiptPreviewVersion } from '../common/utils/preview-cache.util';
+import { getTransactionExplorerUrl } from '../blockchain/config/chains.config';
 
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
 
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(private readonly paymentsService: PaymentsService) { }
 
   /**
    * Submit a payment from the frontend after blockchain transaction
@@ -112,10 +113,10 @@ export class PaymentsController {
           createdAt: payment.createdAt,
           dashboardUrl:
             process.env.DASHBOARD_URL || 'https://www.obverse.cc/dashboard',
-          explorerUrl:
-            payment.chain?.toLowerCase() === 'solana'
-              ? `https://solscan.io/tx/${payment.txSignature}`
-              : `https://monadscan.com/tx/${payment.txSignature}`,
+          explorerUrl: getTransactionExplorerUrl(
+            payment.chain,
+            payment.txSignature,
+          ),
           customerData: payment.customerData,
           previewImageUrl: (() => {
             const previewBaseUrl =
